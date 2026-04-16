@@ -57,7 +57,7 @@ img {
 .toy-form-field {
   margin: 0.75rem auto;
   width: 60%;
-  text-align: left;
+  text-align: center;
 }
 
 .toy-form-label {
@@ -126,6 +126,32 @@ img {
   animation: shimmer 1.35s linear infinite;
   background: linear-gradient(90deg, #edf0f8 0%, #dfe6f8 45%, #edf0f8 100%);
   background-size: 200% 100%;
+}
+
+.toy-form-fade-enter-active,
+.toy-form-fade-leave-active {
+  transition: opacity 0.24s ease, transform 0.24s ease;
+}
+
+.toy-form-fade-enter,
+.toy-form-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.toy-list-enter-active,
+.toy-list-leave-active {
+  transition: opacity 0.28s ease, transform 0.28s ease;
+}
+
+.toy-list-enter,
+.toy-list-leave-to {
+  opacity: 0;
+  transform: translateY(14px) scale(0.98);
+}
+
+.toy-list-move {
+  transition: transform 0.28s ease;
 }
 
 .loader {

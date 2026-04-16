@@ -1,9 +1,11 @@
 /*jshint esversion: 9 */
 import Toy from './toy.vue';
+import ToySkeleton from './toy-skeleton.vue';
 
 export default {
   components: {
     Toy,
+    ToySkeleton,
   },
   data() {
     return {
