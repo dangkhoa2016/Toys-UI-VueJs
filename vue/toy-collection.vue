@@ -1,21 +1,7 @@
 <template>
 
   <div>
-    <div v-if='showSkeletons' id='toy-collection-skeleton' class='row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 gx-3 gy-4'>
-      <div v-for='skeleton in skeletonCount' :key='`skeleton-${skeleton}`' class='col'>
-        <div class='card toy-card-skeleton'>
-          <div class='toy-skeleton-image shimmer-block'></div>
-          <div class='card-body'>
-            <div class='toy-skeleton-line shimmer-block'></div>
-            <div class='toy-skeleton-line toy-skeleton-line-short shimmer-block'></div>
-            <div class='toy-skeleton-actions'>
-              <div class='toy-skeleton-button shimmer-block'></div>
-              <div class='toy-skeleton-button shimmer-block'></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <toy-skeleton v-if='showSkeletons' :count='skeletonCount'></toy-skeleton>
 
     <div v-else-if='errorLoadToys' class='toy-collection-state text-center' role='alert'>
       <h4>Unable to load toys right now.</h4>
@@ -36,9 +22,9 @@
       </div>
     </div>
 
-    <div v-else id='toy-collection' class='row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 gx-3 gy-4'>
+    <transition-group v-else id='toy-collection' name='toy-list' tag='div' class='row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 gx-3 gy-4'>
       <toy v-for='item in toys' :key='item.id' :toy='item'></toy>
-    </div>
+    </transition-group>
   </div>
 
 </template>
