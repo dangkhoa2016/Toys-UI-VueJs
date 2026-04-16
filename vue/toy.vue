@@ -1,7 +1,7 @@
 <template>
 
   <div class='col toy-card-shell' :data-id='toy.id'>
-    <article class='card toy-card' :class="{ 'is-busy': isBusy }">
+    <article ref='card' class='card toy-card' :class="{ 'is-busy': isBusy }">
       <img :src='toy.image' :alt='toy.name' class='my-1' loading='lazy' />
       <div class='card-body'>
         <h5 class='card-title'>{{ toy.name }}</h5>
