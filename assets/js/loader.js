@@ -1,13 +1,17 @@
 /*jshint esversion: 9 */
+import { appStore } from '../../vue/stores/appStore.js';
+import { toyStore } from '../../vue/stores/toyStore.js';
+import { handleErrors, sleep, fetchWithRetry } from './utils.js';
 
-const { loadModule, vueVersion } = window['vue2-sfc-loader'];
+const { loadModule } = window['vue2-sfc-loader'];
 
-window.options = {
-  moduleCache: {},
+const options = {
+  moduleCache: {
+    vue: Vue,
+  },
   async getFile(url) {
-    const res = await fetch(url);
-    if (!res.ok)
-      throw Object.assign(new Error(url + ' ' + res.statusText), { res });
+    const res = await fetchWithRetry(url);
+    if (!res.ok) throw Object.assign(new Error(`${res.statusText}: ${url}`), { res });
     return await res.text();
   },
 
@@ -17,66 +21,41 @@ window.options = {
     document.head.insertBefore(style, ref);
   },
 
+  pathResolve({ refPath, relPath }) {
+    if (relPath === '.') return refPath;
+    if (relPath.startsWith('./')) return refPath.slice(0, refPath.lastIndexOf('/') + 1) + relPath.slice(2);
+    return relPath;
+  },
+
   log(type, ...args) {
-    console[type](...args);
+    if (type === 'error' || type === 'warn') {
+      console[type](...args);
+    }
   },
 };
 
 (async () => {
+  if (window.BootstrapVue) {
+    Vue.use(window.BootstrapVue);
+  }
 
-  window.sleep = function (ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  };
-
-  const loadStore = function (file) {
-    return loadJs(`/vue/stores/${file}.js`);
-  };
-
-  const loadJs = function (file) {
-    return new Promise((resolve) => {
-      fetch(file)
-        .then(res => {
-          if (res.status !== 200)
-            throw new Error(`File [${file}] does not exists.`);
-          return res.text();
-        }).then(js => {
-          eval(js);
-          resolve();
-        }).catch(ex => {
-          console.log(`Error load js: ${file}`, ex);
-          resolve();
-        });
-    });
-  };
-
-  const handleErrors = function (response) {
-    return new Promise(async (resolve) => {
-      const contentType = response.headers.get('content-type') || '';
-
-      if (!response.ok) {
-        if (response.status === 422)
-          resolve({ status: response.status, error: 'Missing required field.' });
-
-        if (!contentType || contentType.includes('text/html') || contentType.includes('text/plain'))
-          resolve({ status: response.status, ...(await response.text()) });
-        else
-          resolve({ status: response.status, ...(await response.json()) });
-        return;
-      }
-
-      if (contentType.indexOf('image/') !== -1)
-        resolve({ url: response.url });
-      else if (contentType.includes('text/html') || contentType.includes('text/plain'))
-        resolve(await response.text());
-      else
-        resolve(await response.json() || {});
-    });
-  };
-
-  window.handleErrors = handleErrors;
+  // Set standard utilities on Vue prototype
   Vue.prototype.$handleErrors = handleErrors;
+  Vue.prototype.$sleep = sleep;
 
-  await loadStore('appStore');
-  await loadStore('toyStore');
-  await loadJs('/assets/js/script.js');
+  const store = new Vuex.Store({
+    modules: {
+      appStore,
+      toyStore,
+    }
+  });
+
+  new Vue({
+    store,
+    el: '#app',
+    template: '<app></app>',
+    components: {
+      'app': () => loadModule('/vue/main.vue', options),
+    },
+  });
 })();
