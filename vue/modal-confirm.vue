@@ -4,12 +4,11 @@
     ok-title='Yes' :cancel-disabled='deletingToy'
     cancel-title='Close' ok-variant='danger'
     no-close-on-backdrop='true' @ok='handleOk' size='md'
-    @hidden='onHidden'>
+    @shown='onShown' @hidden='onHidden'>
 
     <template #modal-header='{ close }'>
       <h4 class='mb-0'>Please confirm</h4>
-      <button type='button' v-if='!deletingToy' class='btn btn-close btn-sm' data-bs-dismiss='modal'
-        aria-label='Close' @click.prevent='close()'></button>
+      <button type='button' v-if='!deletingToy' class='btn-close' aria-label='Close' @click.prevent='close()'></button>
     </template>
 
     <div class='modal-body'>

@@ -36,6 +36,13 @@ export default {
       setConfirmDeleteToyId: 'toyStore/setConfirmDeleteToyId',
       deleteToy: 'toyStore/deleteToy',
     }),
+    onShown() {
+      this.$nextTick(() => {
+        document.querySelectorAll('.modal-backdrop').forEach((backdrop) => {
+          backdrop.classList.add('fade', 'show');
+        });
+      });
+    },
     handleOk(bvModalEvt) {
       // Prevent modal from closing
       bvModalEvt.preventDefault();
