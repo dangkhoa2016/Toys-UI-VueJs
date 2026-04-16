@@ -1,8 +1,8 @@
 <template>
 
-  <div id='toy-collection-skeleton' class='row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 gx-3 gy-4'>
-    <div v-for='skeleton in count' :key='`skeleton-${skeleton}`' class='col'>
-      <div class='card toy-card-skeleton'>
+  <div class='toy-skeleton-list'>
+    <div v-for='skeleton in count' :key='`skeleton-${skeleton}`' class='col toy-card-shell'>
+      <div class='card toy-card toy-card-skeleton'>
         <div class='toy-skeleton-image shimmer-block'></div>
         <div class='card-body'>
           <div class='toy-skeleton-line shimmer-block'></div>

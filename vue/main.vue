@@ -3,21 +3,17 @@
 
     <mosaic-loader></mosaic-loader>
 
-    <div id='toy-header'>
-      <img src='/assets/images/logo.png' alt='toy-header' />
+    <header id='toy-header'>
+      <img src='/assets/images/logo.png' alt='Toy Tale logo' />
+    </header>
 
+    <main class='container-fluid mt-3'>
       <add-toy-form></add-toy-form>
-    </div>
-
-    <b-container fluid>
-      <div class='container-fluid mt-3'>
-        <top-action></top-action>
-
-        <toy-collection></toy-collection>
-      </div>
-
+      <edit-toy-form></edit-toy-form>
+      <top-action></top-action>
+      <toy-collection></toy-collection>
       <modal-confirm></modal-confirm>
-    </b-container>
+    </main>
 
     <a href='#' @click='goToTop' class='to-top text-success' v-show='showGoToTop'>
       <svg xmlns='http://www.w3.org/2000/svg' width='2em' height='2em' viewBox='0 0 24 24' fill='none'
@@ -34,6 +30,7 @@
 <script>
 import ToyCollection from './toy-collection.vue';
 import AddToyForm from './add-toy-form.vue';
+import EditToyForm from './edit-toy-form.vue';
 import MosaicLoader from './mosaic-loader.vue';
 import TopAction from './top-action.vue';
 import ModalConfirm from './modal-confirm.vue';
@@ -42,6 +39,7 @@ export default {
   components: {
     ToyCollection,
     AddToyForm,
+    EditToyForm,
     MosaicLoader,
     TopAction,
     ModalConfirm,
