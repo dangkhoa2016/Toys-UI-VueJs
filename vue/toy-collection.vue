@@ -16,7 +16,15 @@
       </div>
     </div>
 
-    <div v-else-if='!hasToys' id='toy-collection' class='row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4'>
+    <div v-else-if='isFilteredEmpty' id='toy-collection' class='row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4'>
+      <div class='col-12 toy-status-shell'>
+        <div class='alert toy-status-alert toy-status-alert-info' role='alert'>
+          <p class='mb-0'>No toys match the current search or sort view.</p>
+        </div>
+      </div>
+    </div>
+
+    <div v-else-if='!hasStoredToys' id='toy-collection' class='row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4'>
       <div class='col-12 toy-status-shell'>
         <div class='alert toy-status-alert toy-status-alert-info' role='alert'>
           <p class='mb-0'>{{ emptyStateError || 'No toys available yet. Load the bundled demo data to populate the collection.' }}</p>

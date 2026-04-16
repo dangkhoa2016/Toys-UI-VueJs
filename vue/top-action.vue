@@ -18,14 +18,14 @@
                 <label class='toy-field h-100 d-flex flex-column'>
                   <span class='toy-field-label'>Search by name</span>
                   <input id='toy-search' type='search' class='form-control toy-control-input'
-                    placeholder='Type a toy name...' autocomplete='off' />
+                    placeholder='Type a toy name...' autocomplete='off' v-model='searchTerm' />
                 </label>
               </div>
 
               <div class='col-12 col-md-6 col-lg-4'>
                 <label class='toy-field h-100 d-flex flex-column'>
                   <span class='toy-field-label'>Sort by likes</span>
-                  <select id='toy-sort' class='form-select toy-control-input'>
+                  <select id='toy-sort' class='form-select toy-control-input' v-model='sortOrder'>
                     <option value='default'>Default order</option>
                     <option value='likes-desc'>Most liked first</option>
                     <option value='likes-asc'>Least liked first</option>
@@ -50,9 +50,33 @@
   /*jshint esversion: 9 */
 
   export default {
+    computed: {
+      ...Vuex.mapGetters({
+        currentSearchTerm: 'toyStore/getSearchTerm',
+        currentSortOrder: 'toyStore/getSortOrder',
+      }),
+      searchTerm: {
+        get() {
+          return this.currentSearchTerm;
+        },
+        set(value) {
+          this.setSearchTerm(value);
+        },
+      },
+      sortOrder: {
+        get() {
+          return this.currentSortOrder;
+        },
+        set(value) {
+          this.setSortOrder(value);
+        },
+      },
+    },
     methods: {
       ...Vuex.mapActions({
         toggleAddFormStatus: 'toyStore/toggleAddFormStatus',
+        setSearchTerm: 'toyStore/setSearchTerm',
+        setSortOrder: 'toyStore/setSortOrder',
       }),
     },
   };
