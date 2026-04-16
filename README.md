@@ -6,7 +6,8 @@ Toy Tale is a small Vue 2 no-build demo that loads Vue single-file components di
 
 - Vue 2.7
 - Vuex 3
-- BootstrapVue 2
+- Bootstrap 5.2.3
+- BootstrapVue 2 runtime components
 - Browser-side ES modules
 - Remote or local toy API
 - Local demo seed data
@@ -85,5 +86,5 @@ The current checked-in value may point to a temporary forwarded URL, so update i
 
 - The app intentionally keeps the no-build setup for simplicity.
 - Request retry and response error normalization live in `assets/js/utils.js`.
-- BootstrapVue 2 is used with CDN assets, so any styling changes should be checked in the browser for compatibility.
+- The app uses Bootstrap 5.2.3 for styling while keeping BootstrapVue 2 runtime components, so UI changes should be checked in the browser for compatibility.
 - For requests without a body, avoid sending `Content-Type: application/json`; this matters for routes like `DELETE`.
