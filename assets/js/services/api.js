@@ -39,6 +39,22 @@ export const toyService = {
   },
 
   /**
+   * Update a toy
+   * @param {string} endpoint
+   * @param {number|string} id
+   * @param {Omit<Toy, 'id'>} toyData
+   * @returns {Promise<Toy>}
+   */
+  async update(endpoint, id, toyData) {
+    const response = await fetchWithRetry(`${endpoint}/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(toyData),
+    });
+    return handleErrors(response);
+  },
+
+  /**
    * Delete a toy
    * @param {string} endpoint 
    * @param {number|string} id 

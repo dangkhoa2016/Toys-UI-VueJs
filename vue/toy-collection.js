@@ -16,15 +16,22 @@ export default {
   },
   computed: {
     ...Vuex.mapGetters({
-      toys: 'toyStore/getCachedToys',
+      toys: 'toyStore/getVisibleToys',
+      allToys: 'toyStore/getCachedToys',
       loadingToys: 'toyStore/getLoadingToys',
       errorLoadToys: 'toyStore/getErrorLoadToys',
     }),
     hasToys() {
       return Array.isArray(this.toys) && this.toys.length > 0;
     },
+    hasStoredToys() {
+      return Array.isArray(this.allToys) && this.allToys.length > 0;
+    },
     showSkeletons() {
-      return this.loadingToys && !this.hasToys;
+      return this.loadingToys && !this.hasStoredToys;
+    },
+    isFilteredEmpty() {
+      return !this.loadingToys && !this.errorLoadToys && this.hasStoredToys && !this.hasToys;
     },
   },
   async mounted() {
@@ -39,7 +46,7 @@ export default {
       this.emptyStateError = '';
       const success = await this.loadToys();
 
-      if (success && !this.hasToys) {
+      if (success && !this.hasStoredToys) {
         await this.seedDemoToys(true);
       }
     },
@@ -63,7 +70,7 @@ export default {
         this.seedingDemo = false;
       }
 
-      if (isAutoSeed && !this.hasToys) {
+      if (isAutoSeed && !this.hasStoredToys) {
         this.emptyStateError = 'Demo data is still empty after seeding.';
       }
     },

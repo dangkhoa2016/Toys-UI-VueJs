@@ -13,6 +13,7 @@
       <top-action></top-action>
       <toy-collection></toy-collection>
       <modal-confirm></modal-confirm>
+      <toast-region></toast-region>
     </main>
 
     <a href='#' @click='goToTop' class='to-top text-success' v-show='showGoToTop'>
@@ -34,6 +35,7 @@ import EditToyForm from './edit-toy-form.vue';
 import MosaicLoader from './mosaic-loader.vue';
 import TopAction from './top-action.vue';
 import ModalConfirm from './modal-confirm.vue';
+import ToastRegion from './toast-region.vue';
 
 export default {
   components: {
@@ -43,6 +45,7 @@ export default {
     MosaicLoader,
     TopAction,
     ModalConfirm,
+    ToastRegion,
   },
   data() {
     return {
