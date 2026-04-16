@@ -77,10 +77,14 @@ The current checked-in value may point to a temporary forwarded URL, so update i
 
 - The app fetches toys from the configured API on load.
 - The add-toy form validates required fields and image URLs before submit.
+- Users can search toys by name from the control panel.
+- Users can sort toys by likes in ascending or descending order.
+- Users can edit toy details from the collection without resetting the current like count.
 - The collection view shows loading skeletons, an error state with retry, and an empty state with manual demo seeding.
 - If the API returns an empty list, the app can seed demo toys from `assets/db.json`.
 - Demo image paths are converted to absolute URLs before being sent to the API.
-- Users can create, like, and delete toys from the UI.
+- Users can create, like, delete, and edit toys from the UI.
+- Success and error actions show toast notifications in the corner of the UI.
 
 ## Notes
 

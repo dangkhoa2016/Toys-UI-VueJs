@@ -2,7 +2,7 @@
   
   <b-modal id='modal-delete-toy' centered hide-header hide-footer size='md'
     content-class='toy-modal-content border-0' no-close-on-backdrop='true'
-    @shown='onShown' @hidden='onHidden'>
+    @hidden='onHidden'>
     <div class='modal-header border-0'>
       <h4 class='mb-0'>Please confirm</h4>
       <button type='button' v-if='!deletingToy' class='btn-close' aria-label='Close' @click.prevent='hideModal()'></button>

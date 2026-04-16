@@ -8,6 +8,10 @@ const state = {
   searchTerm: '',
   sortOrder: 'default',
   toasts: [],
+  highlightedToy: {
+    id: null,
+    nonce: 0,
+  },
 
   toys: [],
   toy: null,
@@ -43,6 +47,9 @@ const mutations = {
   },
   SET_SORT_ORDER(state, payload) {
     state.sortOrder = payload;
+  },
+  SET_HIGHLIGHTED_TOY(state, payload) {
+    state.highlightedToy = payload;
   },
   PUSH_TOAST(state, payload) {
     state.toasts = [...state.toasts, payload];
@@ -130,6 +137,8 @@ const mutations = {
   },
 };
 
+let highlightTimer = null;
+
 function getToastMessage(error, fallbackMessage) {
   if (typeof error === 'string' && error.trim()) {
     return error;
@@ -171,6 +180,27 @@ const actions = {
     const { commit } = context;
     const nextSortOrder = ['default', 'likes-desc', 'likes-asc'].includes(payload) ? payload : 'default';
     commit('SET_SORT_ORDER', nextSortOrder);
+  },
+  flashToy(context, payload) {
+    const { commit } = context;
+    const toyId = payload ? payload.toString() : null;
+
+    if (highlightTimer) {
+      clearTimeout(highlightTimer);
+    }
+
+    commit('SET_HIGHLIGHTED_TOY', {
+      id: toyId,
+      nonce: Date.now(),
+    });
+
+    highlightTimer = setTimeout(() => {
+      commit('SET_HIGHLIGHTED_TOY', {
+        id: null,
+        nonce: 0,
+      });
+      highlightTimer = null;
+    }, 700);
   },
   pushToast(context, payload) {
     const { commit } = context;
@@ -351,6 +381,7 @@ const actions = {
       } else {
         commit('SET_UPDATE_TOY_RESULT', result);
         commit('INTERNAL_UPDATE_DATA', result);
+        dispatch('flashToy', result.id);
         dispatch('pushToast', {
           title: 'Toy updated',
           message: `${result.name} was saved successfully.`,
@@ -436,6 +467,7 @@ const actions = {
     try {
       const result = await toyService.like(endpoint, id, toy.likes + 1);
       commit('INTERNAL_UPDATE_DATA', result);
+      dispatch('flashToy', result.id);
       dispatch('pushToast', {
         title: 'Likes updated',
         message: `${result.name} now has ${result.likes} likes.`,
@@ -463,6 +495,7 @@ const getters = {
   getSearchTerm: (state) => state.searchTerm,
   getSortOrder: (state) => state.sortOrder,
   getToasts: (state) => state.toasts,
+  getHighlightedToy: (state) => state.highlightedToy,
   getCachedToys: (state) => state.toys,
   getVisibleToys: (state) => {
     const toys = Array.isArray(state.toys) ? [...state.toys] : [];

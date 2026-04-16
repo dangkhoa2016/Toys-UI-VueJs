@@ -1,6 +1,82 @@
 /*jshint esversion: 9 */
 
+function normalizeBackdrop(backdrop) {
+  if (!backdrop || !backdrop.classList) {
+    return;
+  }
+
+  backdrop.classList.add('fade', 'show');
+}
+
+function findBackdrop(node) {
+  if (!(node instanceof HTMLElement)) {
+    return null;
+  }
+
+  if (node.classList.contains('modal-backdrop')) {
+    return node;
+  }
+
+  return node.querySelector('.modal-backdrop');
+}
+
+function stopModalBackdropObserver(target) {
+  if (!target || !target.backdropObserver) {
+    return;
+  }
+
+  target.backdropObserver.disconnect();
+  target.backdropObserver = null;
+}
+
+function armModalBackdropObserver(target) {
+  if (!target) {
+    return;
+  }
+
+  stopModalBackdropObserver(target);
+
+  const existingBackdrop = document.querySelector('.modal-backdrop');
+  if (existingBackdrop) {
+    normalizeBackdrop(existingBackdrop);
+    return;
+  }
+
+  target.backdropObserver = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        const backdrop = findBackdrop(node);
+        if (!backdrop) {
+          continue;
+        }
+
+        normalizeBackdrop(backdrop);
+        stopModalBackdropObserver(target);
+        return;
+      }
+    }
+  });
+
+  target.backdropObserver.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
+}
+
 export default {
+  data() {
+    return {
+      backdropObserver: null,
+      form: {
+        name: '',
+        image: '',
+      },
+      validationErrors: {
+        name: '',
+        image: '',
+      },
+    };
+  },
   computed: {
     ...Vuex.mapGetters({
       editingToyId: 'toyStore/getEditingToyId',
@@ -20,22 +96,11 @@ export default {
       return `#${this.editingToy.id} ${this.editingToy.name}`;
     },
   },
-  data() {
-    return {
-      form: {
-        name: '',
-        image: '',
-      },
-      validationErrors: {
-        name: '',
-        image: '',
-      },
-    };
-  },
   watch: {
     editingToyId(value) {
       if (value) {
         this.syncFormFromToy();
+        armModalBackdropObserver(this);
         this.$bvModal.show('modal-edit-toy');
         return;
       }
@@ -53,18 +118,14 @@ export default {
       }
     },
   },
+  beforeDestroy() {
+    stopModalBackdropObserver(this);
+  },
   methods: {
     ...Vuex.mapActions({
       updateToyBase: 'toyStore/updateToy',
       setEditingToyId: 'toyStore/setEditingToyId',
     }),
-    syncBackdropClasses() {
-      this.$nextTick(() => {
-        document.querySelectorAll('.modal-backdrop').forEach((backdrop) => {
-          backdrop.classList.add('fade', 'show');
-        });
-      });
-    },
     syncFormFromToy() {
       if (!this.editingToy) {
         return;
@@ -140,7 +201,6 @@ export default {
       });
     },
     onShown() {
-      this.syncBackdropClasses();
       this.$nextTick(() => {
         this.$refs.nameInput?.focus();
       });
@@ -149,6 +209,7 @@ export default {
       this.$bvModal.hide('modal-edit-toy');
     },
     onHidden() {
+      stopModalBackdropObserver(this);
       this.setEditingToyId(null);
     },
   },
