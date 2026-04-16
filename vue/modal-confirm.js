@@ -43,11 +43,11 @@ export default {
         });
       });
     },
-    handleOk(bvModalEvt) {
-      // Prevent modal from closing
-      bvModalEvt.preventDefault();
-
+    confirmDeleteToy() {
       this.deleteToy();
+    },
+    hideModal() {
+      this.$bvModal.hide('modal-delete-toy');
     },
     onHidden() {
       this.setConfirmDeleteToyId(null);

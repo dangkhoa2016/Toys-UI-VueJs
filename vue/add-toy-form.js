@@ -23,16 +23,33 @@ export default {
     };
   },
   watch: {
+    addFormStatus(val) {
+      if (val) {
+        this.$bvModal.show('modal-add-toy');
+        return;
+      }
+
+      this.$bvModal.hide('modal-add-toy');
+    },
     saveToyResult(val) {
       if (val && val.id) {
         this.resetForm();
+        this.$bvModal.hide('modal-add-toy');
       }
     },
   },
   methods: {
     ...Vuex.mapActions({
       createToyBase: 'toyStore/createToy',
+      setAddFormStatus: 'toyStore/setAddFormStatus',
     }),
+    syncBackdropClasses() {
+      this.$nextTick(() => {
+        document.querySelectorAll('.modal-backdrop').forEach((backdrop) => {
+          backdrop.classList.add('fade', 'show');
+        });
+      });
+    },
     clearFieldError(field) {
       if (this.validationErrors[field]) {
         this.validationErrors = {
@@ -90,6 +107,15 @@ export default {
       }
 
       await this.createToyBase(payload);
+    },
+    onShown() {
+      this.syncBackdropClasses();
+      this.$nextTick(() => {
+        this.$refs.nameInput?.focus();
+      });
+    },
+    onHidden() {
+      this.setAddFormStatus(false);
     },
     resetForm() {
       this.form = {
