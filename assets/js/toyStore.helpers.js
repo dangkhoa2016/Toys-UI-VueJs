@@ -18,6 +18,7 @@ export function createToyStoreState() {
     toys: [],
     toy: null,
     isLoadingToys: null,
+    isAutoSeeding: false,
     totalToys: null,
     loadToysError: null,
     createToyResult: null,
