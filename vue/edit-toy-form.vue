@@ -1,18 +1,18 @@
 <template>
 
   <b-modal id='modal-edit-toy' centered hide-header hide-footer size='lg'
-    content-class='toy-modal-content border-0' @shown='onShown' @hidden='onHidden'>
+    content-class='toy-modal-content border-0' @shown='handleModalShown' @hidden='handleModalHidden'>
     <div class='modal-header border-0 pb-0'>
       <div>
         <p class='toy-modal-eyebrow mb-2'>Shelf maintenance</p>
         <h2 id='modal-edit-toy-title' class='h3 mb-1'>Edit toy details</h2>
         <p class='text-muted mb-0'>Update the selected toy without resetting its current likes.</p>
       </div>
-      <button type='button' class='btn-close' aria-label='Close' @click.prevent='hideModal()'></button>
+      <button type='button' class='btn-close' aria-label='Close' @click.prevent='closeModal()'></button>
     </div>
 
     <div class='modal-body pt-3'>
-      <form id='edit-toy-form' class='text-start' novalidate @submit.prevent='updateToy'>
+      <form id='edit-toy-form' class='text-start' novalidate @submit.prevent='submitUpdateToy'>
         <div class='card toy-form-card border-0 shadow-sm mx-auto'>
           <div class='card-body p-4 p-md-4'>
             <div class='row g-3'>
@@ -65,8 +65,8 @@
               </div>
 
               <div class='col-12'>
-                <div role='alert' class='alert alert-danger mb-0' :class="{ 'd-none': !errorUpdateToy }">
-                  {{ errorUpdateToy }}
+                <div role='alert' class='alert alert-danger mb-0' :class="{ 'd-none': !updateToyError }">
+                  {{ updateToyError }}
                 </div>
               </div>
             </div>

@@ -2,13 +2,37 @@
 import { appStore } from '../../vue/stores/appStore.js';
 import { toyStore } from '../../vue/stores/toyStore.js';
 import { config, normalizeToyImageUrl, toApiImageUrl } from './config/config.js';
+import {
+  armModalBackdropObserver,
+  focusFormField,
+  resetManagedForm,
+  stopModalBackdropObserver,
+} from './modalForm.js';
+import { getHighlightedToySignature } from './toyStore.helpers.js';
+import {
+  CHECKING_PREVIEW_MESSAGE,
+  CHECKING_PREVIEW_PLACEHOLDER,
+  CREATE_PREVIEW_MESSAGE,
+  createPreviewState,
+  createToyFormLifecycleState,
+  createToyFormValues,
+  createValidationErrors,
+  DEFAULT_PREVIEW_PLACEHOLDER,
+  ERROR_PREVIEW_PLACEHOLDER,
+  getImageError,
+  getNameError,
+  getSubmitDisableReason,
+  IMAGE_PREVIEW_DEBOUNCE_MS,
+  INVALID_PREVIEW_PLACEHOLDER,
+  loadImagePreview,
+  LOCKED_PREVIEW_MESSAGE,
+  READY_PREVIEW_MESSAGE,
+  TOY_IMAGE_VALIDATION_MESSAGES,
+  TOY_NAME_MAX_LENGTH,
+  TOY_NAME_MIN_LENGTH,
+  UPDATE_PREVIEW_MESSAGE,
+} from './toyForm.js';
 import { handleErrors, sleep, fetchWithRetry } from './utils.js';
-
-const toyImageValidationMessages = Object.freeze({
-  required: 'Image URL is required.',
-  invalidPath: 'Enter an absolute URL or a local toy image path.',
-  previewLoadError: 'Image preview could not be loaded. Please check the URL or use another image.',
-});
 
 function normalizeImageUrl(value) {
   if (!value || typeof value !== 'string' || /\s/.test(value)) {
@@ -18,25 +42,14 @@ function normalizeImageUrl(value) {
   return normalizeToyImageUrl(value);
 }
 
-function loadImagePreview(source) {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-
-    image.decoding = 'async';
-    image.onload = () => resolve(source);
-    image.onerror = () => reject(new Error('Image preview could not be loaded.'));
-    image.src = source;
-  });
-}
-
 function startToyImagePreviewCheck(vm, source, token) {
   vm.setPreviewState({
     status: 'pending',
     src: '',
     source,
     token,
-    message: 'Checking whether this image can be loaded...',
-    placeholderMessage: 'Checking image preview...',
+    message: CHECKING_PREVIEW_MESSAGE,
+    placeholderMessage: CHECKING_PREVIEW_PLACEHOLDER,
   });
 
   loadImagePreview(source)
@@ -49,7 +62,7 @@ function startToyImagePreviewCheck(vm, source, token) {
         status: 'ready',
         src: source,
         source,
-        message: 'Image preview is ready. This is what the toy card will use.',
+        message: READY_PREVIEW_MESSAGE,
         placeholderMessage: vm.defaultPreviewPlaceholder,
       });
       vm.setFieldError('image', '');
@@ -63,10 +76,10 @@ function startToyImagePreviewCheck(vm, source, token) {
         status: 'error',
         src: '',
         source,
-        message: 'The image could not be loaded, so submit stays locked.',
+        message: LOCKED_PREVIEW_MESSAGE,
         placeholderMessage: vm.errorPreviewPlaceholder,
       });
-      vm.setFieldError('image', toyImageValidationMessages.previewLoadError);
+      vm.setFieldError('image', TOY_IMAGE_VALIDATION_MESSAGES.previewLoadError);
     });
 }
 
@@ -108,8 +121,8 @@ function queueToyImagePreview(vm, immediate = false) {
     src: '',
     source: vm.normalizedImageUrl,
     token,
-    message: 'Checking whether this image can be loaded...',
-    placeholderMessage: 'Checking image preview...',
+    message: CHECKING_PREVIEW_MESSAGE,
+    placeholderMessage: CHECKING_PREVIEW_PLACEHOLDER,
   });
 
   vm.previewDebounceId = window.setTimeout(() => {
@@ -119,19 +132,11 @@ function queueToyImagePreview(vm, immediate = false) {
 }
 
 function getToyImageError(value) {
-  if (!value) {
-    return toyImageValidationMessages.required;
-  }
-
-  if (!this.normalizedImageUrl) {
-    return toyImageValidationMessages.invalidPath;
-  }
-
-  if (this.preview.status === 'error' && this.preview.source === this.normalizedImageUrl) {
-    return toyImageValidationMessages.previewLoadError;
-  }
-
-  return '';
+  return getImageError({
+    value,
+    normalizedImageUrl: this.normalizedImageUrl,
+    preview: this.preview,
+  });
 }
 
 const toyImageFormComputed = Object.freeze({
@@ -142,35 +147,15 @@ const toyImageFormComputed = Object.freeze({
     return `${this.trimmedName || 'Toy'} image preview`;
   },
   submitDisableReason() {
-    if (this.isFormBusy) {
-      return this.formBusyMessage || 'Please wait...';
-    }
-
-    if (this.getNameError(this.trimmedName) || this.$getToyImageError(this.trimmedImage)) {
-      return 'Complete the required fields with valid values.';
-    }
-
-    if (this.unchangedSubmitMessage) {
-      return this.unchangedSubmitMessage;
-    }
-
-    if (!this.normalizedImageUrl) {
-      return 'Enter a valid image URL or local toy image path.';
-    }
-
-    if (this.preview.status === 'error' && this.preview.source === this.normalizedImageUrl) {
-      return 'Use an image that can be loaded in preview.';
-    }
-
-    if (this.preview.source !== this.normalizedImageUrl || this.preview.status === 'pending') {
-      return 'Wait until the image preview finishes loading.';
-    }
-
-    if (this.preview.status !== 'ready') {
-      return 'Wait until the image preview is ready.';
-    }
-
-    return '';
+    return getSubmitDisableReason({
+      isFormBusy: this.isFormBusy,
+      formBusyMessage: this.formBusyMessage,
+      nameError: this.getNameError(this.trimmedName),
+      imageError: this.$getToyImageError(this.trimmedImage),
+      unchangedSubmitMessage: this.unchangedSubmitMessage,
+      normalizedImageUrl: this.normalizedImageUrl,
+      preview: this.preview,
+    });
   },
   isSubmitDisabled() {
     return Boolean(this.submitDisableReason);
@@ -217,6 +202,46 @@ const options = {
   Vue.prototype.$handleErrors = handleErrors;
   Vue.prototype.$sleep = sleep;
   Object.defineProperties(Vue.prototype, {
+    $toyForm: {
+      value: Object.freeze({
+        TOY_NAME_MIN_LENGTH,
+        TOY_NAME_MAX_LENGTH,
+        IMAGE_PREVIEW_DEBOUNCE_MS,
+        DEFAULT_PREVIEW_PLACEHOLDER,
+        INVALID_PREVIEW_PLACEHOLDER,
+        ERROR_PREVIEW_PLACEHOLDER,
+        CREATE_PREVIEW_MESSAGE,
+        UPDATE_PREVIEW_MESSAGE,
+        TOY_IMAGE_VALIDATION_MESSAGES,
+        createToyFormLifecycleState,
+        createToyFormValues,
+        createValidationErrors,
+        createPreviewState,
+        getNameError,
+        getImageError,
+        getSubmitDisableReason,
+        loadImagePreview,
+      }),
+      writable: false,
+      configurable: false,
+    },
+    $modalForm: {
+      value: Object.freeze({
+        armModalBackdropObserver,
+        focusFormField,
+        resetManagedForm,
+        stopModalBackdropObserver,
+      }),
+      writable: false,
+      configurable: false,
+    },
+    $toyStoreHelpers: {
+      value: Object.freeze({
+        getHighlightedToySignature,
+      }),
+      writable: false,
+      configurable: false,
+    },
     $appConfig: {
       value: Object.freeze({ ...config }),
       writable: false,
@@ -233,7 +258,7 @@ const options = {
       configurable: false,
     },
     $toyImageValidationMessages: {
-      value: toyImageValidationMessages,
+      value: TOY_IMAGE_VALIDATION_MESSAGES,
       writable: false,
       configurable: false,
     },

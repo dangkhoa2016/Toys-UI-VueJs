@@ -1,9 +1,9 @@
 /*jshint esversion: 9 */
-import { config } from '../../assets/js/config/config.js';
+import { TOY_API_URL } from '../../assets/js/config/config.js';
 
 const state = {
   appLoaded: false,
-  endpoint: config.API_ENDPOINT,
+  endpoint: TOY_API_URL,
 };
 
 const mutations = {
@@ -30,7 +30,7 @@ const getters = {
   getEndpoint: (state) => {
     let endpoint = state.endpoint;
     if ((endpoint || '').length < 4)
-      endpoint = config.API_ENDPOINT;
+      endpoint = TOY_API_URL;
 
     return endpoint;
   },

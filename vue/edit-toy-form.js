@@ -1,118 +1,77 @@
 /*jshint esversion: 9 */
 
-const TOY_NAME_MIN_LENGTH = 2;
-const TOY_NAME_MAX_LENGTH = 120;
-const IMAGE_PREVIEW_DEBOUNCE_MS = 300;
-const DEFAULT_PREVIEW_PLACEHOLDER = 'Preview will appear here after the image URL is checked.';
-const INVALID_PREVIEW_PLACEHOLDER = 'Enter a valid image URL or local toy image path to preview it.';
-const ERROR_PREVIEW_PLACEHOLDER = 'This image could not be loaded in preview.';
+const TOY_FORM = Vue.prototype.$toyForm || {};
+const TOY_NAME_MIN_LENGTH = TOY_FORM.TOY_NAME_MIN_LENGTH || 2;
+const TOY_NAME_MAX_LENGTH = TOY_FORM.TOY_NAME_MAX_LENGTH || 120;
+const IMAGE_PREVIEW_DEBOUNCE_MS = TOY_FORM.IMAGE_PREVIEW_DEBOUNCE_MS || 300;
+const DEFAULT_PREVIEW_PLACEHOLDER = TOY_FORM.DEFAULT_PREVIEW_PLACEHOLDER || 'Preview will appear here after the image URL is checked.';
+const INVALID_PREVIEW_PLACEHOLDER = TOY_FORM.INVALID_PREVIEW_PLACEHOLDER || 'Enter a valid image URL or local toy image path to preview it.';
+const ERROR_PREVIEW_PLACEHOLDER = TOY_FORM.ERROR_PREVIEW_PLACEHOLDER || 'This image could not be loaded in preview.';
+const UPDATE_PREVIEW_MESSAGE = TOY_FORM.UPDATE_PREVIEW_MESSAGE || 'The save button unlocks after the new image is verified.';
 const TOY_IMAGE_FORM_COMPUTED = Vue.prototype.$toyImageFormComputed || {};
+const MODAL_FORM = Vue.prototype.$modalForm || {};
+const armModalBackdropObserver = MODAL_FORM.armModalBackdropObserver || (() => {});
+const stopModalBackdropObserver = MODAL_FORM.stopModalBackdropObserver || (() => {});
+const focusFormField = MODAL_FORM.focusFormField || (() => {});
+const resetManagedForm = MODAL_FORM.resetManagedForm || ((options = {}) => {
+  if (typeof options.afterReset === 'function') {
+    options.afterReset();
+  }
+});
 
-function createValidationErrors() {
-  return {
-    name: '',
-    image: '',
-  };
+const createValidationErrors = TOY_FORM.createValidationErrors || (() => ({ name: '', image: '' }));
+const createToyFormValues = TOY_FORM.createToyFormValues || (({ toy = null } = {}) => ({
+  name: String(toy && toy.name ? toy.name : ''),
+  image: String(toy && toy.image ? toy.image : ''),
+}));
+const createToyFormLifecycleState = TOY_FORM.createToyFormLifecycleState || ((options = {}) => ({
+  form: createToyFormValues(options),
+  localSubmitting: false,
+  preview: createFormPreviewState(),
+  validationErrors: createValidationErrors(),
+}));
+
+function createFormPreviewState() {
+  const createState = TOY_FORM.createPreviewState;
+  return typeof createState === 'function'
+    ? createState({ message: UPDATE_PREVIEW_MESSAGE, placeholderMessage: DEFAULT_PREVIEW_PLACEHOLDER })
+    : {
+        status: 'idle',
+        src: '',
+        source: '',
+        message: UPDATE_PREVIEW_MESSAGE,
+        placeholderMessage: DEFAULT_PREVIEW_PLACEHOLDER,
+        token: 0,
+      };
 }
 
-function createPreviewState() {
-  return {
-    status: 'idle',
-    src: '',
-    source: '',
-    message: 'The save button unlocks after the new image is verified.',
-    placeholderMessage: DEFAULT_PREVIEW_PLACEHOLDER,
-    token: 0,
-  };
-}
-
-function normalizeBackdrop(backdrop) {
-  if (!backdrop || !backdrop.classList) {
-    return;
-  }
-
-  backdrop.classList.add('fade', 'show');
-}
-
-function findBackdrop(node) {
-  if (!(node instanceof HTMLElement)) {
-    return null;
-  }
-
-  if (node.classList.contains('modal-backdrop')) {
-    return node;
-  }
-
-  return node.querySelector('.modal-backdrop');
-}
-
-function stopModalBackdropObserver(target) {
-  if (!target || !target.backdropObserver) {
-    return;
-  }
-
-  target.backdropObserver.disconnect();
-  target.backdropObserver = null;
-}
-
-function armModalBackdropObserver(target) {
-  if (!target) {
-    return;
-  }
-
-  stopModalBackdropObserver(target);
-
-  const existingBackdrop = document.querySelector('.modal-backdrop');
-  if (existingBackdrop) {
-    normalizeBackdrop(existingBackdrop);
-    return;
-  }
-
-  target.backdropObserver = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      for (const node of mutation.addedNodes) {
-        const backdrop = findBackdrop(node);
-        if (!backdrop) {
-          continue;
-        }
-
-        normalizeBackdrop(backdrop);
-        stopModalBackdropObserver(target);
-        return;
-      }
-    }
-  });
-
-  target.backdropObserver.observe(document.body, {
-    childList: true,
-    subtree: true,
+function createEditFormState(toy = null) {
+  return createToyFormLifecycleState({
+    toy,
+    previewMessage: UPDATE_PREVIEW_MESSAGE,
+    previewPlaceholderMessage: DEFAULT_PREVIEW_PLACEHOLDER,
   });
 }
 
 export default {
   data() {
+    const lifecycleState = createEditFormState();
     return {
       backdropObserver: null,
-      localSubmitting: false,
       previewDebounceId: 0,
-      form: {
-        name: '',
-        image: '',
-      },
-      validationErrors: createValidationErrors(),
-      preview: createPreviewState(),
+      ...lifecycleState,
     };
   },
   computed: {
     ...Vuex.mapGetters({
       editingToyId: 'toyStore/getEditingToyId',
       editingToy: 'toyStore/getEditingToy',
-      errorUpdateToy: 'toyStore/getErrorUpdateToy',
-      updatingToy: 'toyStore/getUpdatingToy',
+      updateToyError: 'toyStore/getUpdateToyError',
+      updatingToyId: 'toyStore/getUpdatingToyId',
       updateToyResult: 'toyStore/getUpdateToyResult',
     }),
     isUpdating() {
-      return Boolean(this.updatingToy) && this.updatingToy.toString() === (this.editingToyId || '').toString();
+      return Boolean(this.updatingToyId) && this.updatingToyId.toString() === (this.editingToyId || '').toString();
     },
     isFormBusy() {
       return this.isUpdating || this.localSubmitting;
@@ -166,7 +125,7 @@ export default {
   watch: {
     editingToyId(value) {
       if (value) {
-        this.syncFormFromToy();
+        this.syncFormState();
         armModalBackdropObserver(this);
         this.$bvModal.show('modal-edit-toy');
         return;
@@ -176,7 +135,7 @@ export default {
     },
     editingToy(value) {
       if (value && this.editingToyId) {
-        this.syncFormFromToy();
+        this.syncFormState();
       }
     },
     updateToyResult(value) {
@@ -190,12 +149,8 @@ export default {
     stopModalBackdropObserver(this);
   },
   methods: {
-    ...Vuex.mapActions({
-      updateToyBase: 'toyStore/updateToy',
-      setEditingToyId: 'toyStore/setEditingToyId',
-    }),
-    clearUpdateState() {
-      this.$store.commit('toyStore/SET_ERROR_UPDATE_TOY', null);
+    clearSubmitState() {
+      this.$store.commit('toyStore/SET_UPDATE_TOY_ERROR', null);
       this.$store.commit('toyStore/SET_UPDATE_TOY_RESULT', null);
     },
     clearPreviewTimer() {
@@ -206,17 +161,16 @@ export default {
       window.clearTimeout(this.previewDebounceId);
       this.previewDebounceId = 0;
     },
-    syncFormFromToy() {
-      if (!this.editingToy) {
-        return;
-      }
+    syncFormState() {
+      const lifecycleState = createEditFormState(this.editingToy);
 
-      this.form = {
-        name: this.editingToy.name || '',
-        image: this.editingToy.image || '',
+      this.form = lifecycleState.form;
+      this.validationErrors = lifecycleState.validationErrors;
+      this.localSubmitting = lifecycleState.localSubmitting;
+      this.preview = {
+        ...lifecycleState.preview,
+        token: this.preview.token + 1,
       };
-      this.validationErrors = createValidationErrors();
-      this.localSubmitting = false;
       this.queueImagePreview(true);
     },
     getNameError(value) {
@@ -264,7 +218,7 @@ export default {
     resetPreview() {
       this.clearPreviewTimer();
       this.preview = {
-        ...createPreviewState(),
+        ...createFormPreviewState(),
         token: this.preview.token + 1,
       };
     },
@@ -278,7 +232,7 @@ export default {
       this.$queueToyImagePreview(this, immediate);
     },
     handleFieldInput(field) {
-      this.clearUpdateState();
+      this.clearSubmitState();
       this.validateField(field);
 
       if (field === 'image') {
@@ -303,7 +257,7 @@ export default {
         image: this.trimmedImage,
       };
     },
-    async updateToy() {
+    async submitUpdateToy() {
       if (this.localSubmitting || this.isUpdating) {
         return;
       }
@@ -317,7 +271,7 @@ export default {
       this.localSubmitting = true;
 
       try {
-        await this.updateToyBase({
+        await this.$store.dispatch('toyStore/submitUpdateToy', {
           id: this.editingToyId,
           ...payload,
         });
@@ -325,23 +279,34 @@ export default {
         this.localSubmitting = false;
       }
     },
-    onShown() {
+    handleModalShown() {
       this.$nextTick(() => {
-        if (this.$refs.nameInput) {
-          this.$refs.nameInput.focus();
-        }
+        focusFormField(this.$el);
       });
     },
-    hideModal() {
+    closeModal() {
       this.$bvModal.hide('modal-edit-toy');
     },
-    onHidden() {
-      stopModalBackdropObserver(this);
-      this.resetPreview();
-      this.validationErrors = createValidationErrors();
-      this.localSubmitting = false;
-      this.clearUpdateState();
-      this.setEditingToyId(null);
+    handleModalHidden() {
+      resetManagedForm({
+        stopObserver: () => stopModalBackdropObserver(this),
+        afterReset: () => {
+          this.resetFormState();
+          this.clearSubmitState();
+          this.$store.dispatch('toyStore/setEditingToy', null);
+        },
+      });
+    },
+    resetFormState() {
+      const lifecycleState = createEditFormState();
+
+      this.form = lifecycleState.form;
+      this.localSubmitting = lifecycleState.localSubmitting;
+      this.preview = {
+        ...lifecycleState.preview,
+        token: this.preview.token + 1,
+      };
+      this.validationErrors = lifecycleState.validationErrors;
     },
   },
 };
