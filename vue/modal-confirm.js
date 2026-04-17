@@ -1,7 +1,8 @@
 /*jshint esversion: 9 */
-const MODAL_FORM = Vue.prototype.$modalForm || {};
-const armModalBackdropObserver = MODAL_FORM.armModalBackdropObserver || (() => {});
-const stopModalBackdropObserver = MODAL_FORM.stopModalBackdropObserver || (() => {});
+import {
+  armModalBackdropObserver,
+  stopModalBackdropObserver,
+} from '/assets/js/modalForm.js';
 
 export default {
   data() {
@@ -15,10 +16,10 @@ export default {
       isDeletingToy: 'toyStore/getIsDeletingToy',
       deleteToyError: 'toyStore/getDeleteToyError',
       getToyById: 'toyStore/getToyById',
-      deleteToyTarget: 'toyStore/getDeleteToyTarget',
+      confirmDeleteToyId: 'toyStore/getConfirmDeleteToyId',
     }),
     toyInfo() {
-      const toy = this.getToyById(this.deleteToyTarget);
+      const toy = this.getToyById(this.confirmDeleteToyId);
       if (toy)
         return `[${toy.id}] [${toy.name}]`;
     },
@@ -27,7 +28,7 @@ export default {
     },
   },
   watch: {
-    deleteToyTarget(id) {
+    confirmDeleteToyId(id) {
       if (id) {
         armModalBackdropObserver(this);
         this.$bvModal.show('modal-delete-toy');
@@ -52,7 +53,7 @@ export default {
     },
     handleModalHidden() {
       stopModalBackdropObserver(this);
-      this.$store.dispatch('toyStore/setDeleteToyTarget', null);
+      this.$store.dispatch('toyStore/setConfirmDeleteToyId', null);
     },
   }
 };

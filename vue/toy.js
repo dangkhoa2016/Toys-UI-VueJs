@@ -1,10 +1,6 @@
 /*jshint esversion: 9 */
-
-const TOY_STORE_HELPERS = Vue.prototype.$toyStoreHelpers || {};
-const getHighlightedToySignature = TOY_STORE_HELPERS.getHighlightedToySignature || ((state) => {
-  const highlightedToy = state && state.highlightedToy ? state.highlightedToy : { id: null, nonce: 0 };
-  return `${highlightedToy.id || ''}:${highlightedToy.nonce || 0}`;
-});
+import { getHighlightedToySignature } from '/assets/js/toyStore.helpers.js';
+import { normalizeImageUrl } from '/assets/js/toyVueJsForm.js';
 
 export default {
   props: {
@@ -16,17 +12,17 @@ export default {
   computed: {
     ...Vuex.mapGetters({
       isDeletingToy: 'toyStore/getIsDeletingToy',
-      deleteToyTarget: 'toyStore/getDeleteToyTarget',
+      confirmDeleteToyId: 'toyStore/getConfirmDeleteToyId',
       highlightedToy: 'toyStore/getHighlightedToy',
       updatingToyId: 'toyStore/getUpdatingToyId',
     }),
     isBusy() {
       const toyId = this.toy && this.toy.id ? this.toy.id.toString() : '';
-      return (this.isDeletingToy && toyId === (this.deleteToyTarget || '').toString())
+      return (this.isDeletingToy && toyId === (this.confirmDeleteToyId || '').toString())
         || (this.updatingToyId && toyId === this.updatingToyId.toString());
     },
     normalizedImageUrl() {
-      return this.$normalizeImageUrl(this.toy && this.toy.image ? this.toy.image : '');
+      return normalizeImageUrl(this.toy && this.toy.image ? this.toy.image : '');
     },
     highlightSignature() {
       return getHighlightedToySignature({ highlightedToy: this.highlightedToy });
@@ -43,7 +39,7 @@ export default {
   methods: {
     openDeleteToyConfirm() {
       if (this.toy && this.toy.id)
-        this.$store.dispatch('toyStore/setDeleteToyTarget', this.toy.id);
+        this.$store.dispatch('toyStore/setConfirmDeleteToyId', this.toy.id);
     },
     openEditToy() {
       if (this.toy && this.toy.id)
