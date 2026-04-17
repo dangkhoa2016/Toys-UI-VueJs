@@ -17,9 +17,9 @@ export default {
   computed: {
     ...Vuex.mapGetters({
       toys: 'toyStore/getVisibleToys',
-      allToys: 'toyStore/getCachedToys',
-      loadingToys: 'toyStore/getLoadingToys',
-      errorLoadToys: 'toyStore/getErrorLoadToys',
+      allToys: 'toyStore/getToys',
+      isLoadingToys: 'toyStore/getIsLoadingToys',
+      loadToysError: 'toyStore/getLoadToysError',
     }),
     hasToys() {
       return Array.isArray(this.toys) && this.toys.length > 0;
@@ -28,50 +28,38 @@ export default {
       return Array.isArray(this.allToys) && this.allToys.length > 0;
     },
     showSkeletons() {
-      return this.loadingToys && !this.hasStoredToys;
+      return this.isLoadingToys && !this.hasStoredToys;
     },
     isFilteredEmpty() {
-      return !this.loadingToys && !this.errorLoadToys && this.hasStoredToys && !this.hasToys;
+      return !this.isLoadingToys && !this.loadToysError && this.hasStoredToys && !this.hasToys;
     },
   },
   async mounted() {
     await this.ensureToysLoaded();
   },
   methods: {
-    ...Vuex.mapActions({
-      loadToys: 'toyStore/loadToys',
-      importDemo: 'toyStore/importDemo',
-    }),
     async ensureToysLoaded() {
       this.emptyStateError = '';
-      const success = await this.loadToys();
-
-      if (success && !this.hasStoredToys) {
-        await this.seedDemoToys(true);
-      }
+      await this.$store.dispatch('toyStore/loadInitialToys');
     },
     async reloadToys() {
       this.emptyStateError = '';
-      await this.loadToys();
+      await this.$store.dispatch('toyStore/loadInitialToys');
     },
-    async seedDemoToys(isAutoSeed = false) {
+    async seedDemoToys() {
       this.emptyStateError = '';
       this.seedingDemo = true;
 
       try {
-        const success = await this.importDemo();
+        const success = await this.$store.dispatch('toyStore/seedDemoToys');
         if (!success) {
           this.emptyStateError = 'Could not load demo toys right now.';
           return;
         }
 
-        await this.loadToys();
+        await this.$store.dispatch('toyStore/loadInitialToys');
       } finally {
         this.seedingDemo = false;
-      }
-
-      if (isAutoSeed && !this.hasStoredToys) {
-        this.emptyStateError = 'Demo data is still empty after seeding.';
       }
     },
   },

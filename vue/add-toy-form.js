@@ -1,115 +1,81 @@
 /*jshint esversion: 9 */
 
-const TOY_NAME_MIN_LENGTH = 2;
-const TOY_NAME_MAX_LENGTH = 120;
-const IMAGE_PREVIEW_DEBOUNCE_MS = 300;
-const DEFAULT_PREVIEW_PLACEHOLDER = 'Preview will appear here after the image URL is checked.';
-const INVALID_PREVIEW_PLACEHOLDER = 'Enter a valid image URL or local toy image path to preview it.';
-const ERROR_PREVIEW_PLACEHOLDER = 'This image could not be loaded in preview.';
+const TOY_FORM = Vue.prototype.$toyForm || {};
+const TOY_NAME_MIN_LENGTH = TOY_FORM.TOY_NAME_MIN_LENGTH || 2;
+const TOY_NAME_MAX_LENGTH = TOY_FORM.TOY_NAME_MAX_LENGTH || 120;
+const IMAGE_PREVIEW_DEBOUNCE_MS = TOY_FORM.IMAGE_PREVIEW_DEBOUNCE_MS || 300;
+const DEFAULT_PREVIEW_PLACEHOLDER = TOY_FORM.DEFAULT_PREVIEW_PLACEHOLDER || 'Preview will appear here after the image URL is checked.';
+const INVALID_PREVIEW_PLACEHOLDER = TOY_FORM.INVALID_PREVIEW_PLACEHOLDER || 'Enter a valid image URL or local toy image path to preview it.';
+const ERROR_PREVIEW_PLACEHOLDER = TOY_FORM.ERROR_PREVIEW_PLACEHOLDER || 'This image could not be loaded in preview.';
+const CREATE_PREVIEW_MESSAGE = TOY_FORM.CREATE_PREVIEW_MESSAGE || 'Enter an image URL to verify it before submitting.';
 const TOY_IMAGE_FORM_COMPUTED = Vue.prototype.$toyImageFormComputed || {};
+const MODAL_FORM = Vue.prototype.$modalForm || {};
+const armModalBackdropObserver = MODAL_FORM.armModalBackdropObserver || (() => {});
+const stopModalBackdropObserver = MODAL_FORM.stopModalBackdropObserver || (() => {});
+const focusFormField = MODAL_FORM.focusFormField || (() => {});
+const resetManagedForm = MODAL_FORM.resetManagedForm || ((options = {}) => {
+  if (typeof options.afterReset === 'function') {
+    options.afterReset();
+  }
+});
 
-function createValidationErrors() {
-  return {
-    name: '',
-    image: '',
+const createValidationErrors = TOY_FORM.createValidationErrors || (() => ({ name: '', image: '' }));
+const createToyFormValues = TOY_FORM.createToyFormValues || (({ toy = null, includeLikes = false } = {}) => {
+  const form = {
+    name: String(toy && toy.name ? toy.name : ''),
+    image: String(toy && toy.image ? toy.image : ''),
   };
+
+  if (includeLikes) {
+    form.likes = Number.isFinite(toy && toy.likes) ? Number(toy.likes) : 0;
+  }
+
+  return form;
+});
+const createToyFormLifecycleState = TOY_FORM.createToyFormLifecycleState || ((options = {}) => ({
+  form: createToyFormValues(options),
+  localSubmitting: false,
+  preview: createFormPreviewState(),
+  validationErrors: createValidationErrors(),
+}));
+
+function createFormPreviewState() {
+  const createState = TOY_FORM.createPreviewState;
+  return typeof createState === 'function'
+    ? createState({ message: CREATE_PREVIEW_MESSAGE, placeholderMessage: DEFAULT_PREVIEW_PLACEHOLDER })
+    : {
+        status: 'idle',
+        src: '',
+        source: '',
+        message: CREATE_PREVIEW_MESSAGE,
+        placeholderMessage: DEFAULT_PREVIEW_PLACEHOLDER,
+        token: 0,
+      };
 }
 
-function createPreviewState() {
-  return {
-    status: 'idle',
-    src: '',
-    source: '',
-    message: 'Enter an image URL to verify it before submitting.',
-    placeholderMessage: DEFAULT_PREVIEW_PLACEHOLDER,
-    token: 0,
-  };
-}
-
-function normalizeBackdrop(backdrop) {
-  if (!backdrop || !backdrop.classList) {
-    return;
-  }
-
-  backdrop.classList.add('fade', 'show');
-}
-
-function findBackdrop(node) {
-  if (!(node instanceof HTMLElement)) {
-    return null;
-  }
-
-  if (node.classList.contains('modal-backdrop')) {
-    return node;
-  }
-
-  return node.querySelector('.modal-backdrop');
-}
-
-function stopModalBackdropObserver(target) {
-  if (!target || !target.backdropObserver) {
-    return;
-  }
-
-  target.backdropObserver.disconnect();
-  target.backdropObserver = null;
-}
-
-function armModalBackdropObserver(target) {
-  if (!target) {
-    return;
-  }
-
-  stopModalBackdropObserver(target);
-
-  const existingBackdrop = document.querySelector('.modal-backdrop');
-  if (existingBackdrop) {
-    normalizeBackdrop(existingBackdrop);
-    return;
-  }
-
-  target.backdropObserver = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      for (const node of mutation.addedNodes) {
-        const backdrop = findBackdrop(node);
-        if (!backdrop) {
-          continue;
-        }
-
-        normalizeBackdrop(backdrop);
-        stopModalBackdropObserver(target);
-        return;
-      }
-    }
-  });
-
-  target.backdropObserver.observe(document.body, {
-    childList: true,
-    subtree: true,
+function createAddFormState() {
+  return createToyFormLifecycleState({
+    includeLikes: true,
+    previewMessage: CREATE_PREVIEW_MESSAGE,
+    previewPlaceholderMessage: DEFAULT_PREVIEW_PLACEHOLDER,
   });
 }
 
 export default {
   data() {
+    const lifecycleState = createAddFormState();
     return {
       backdropObserver: null,
-      localSubmitting: false,
       previewDebounceId: 0,
-      form: {
-        name: '',
-        image: '',
-        likes: 0,
-      },
-      validationErrors: createValidationErrors(),
-      preview: createPreviewState(),
+      ...lifecycleState,
     };
   },
   computed: {
     ...Vuex.mapGetters({
-      addFormStatus: 'toyStore/getAddFormStatus',
-      errorSaveToy: 'toyStore/getErrorSaveToy',
-      savingToy: 'toyStore/getSavingToy',
-      saveToyResult: 'toyStore/getSaveToyResult',
+      createToyModalOpen: 'toyStore/getCreateToyModalOpen',
+      createToyError: 'toyStore/getCreateToyError',
+      isCreatingToy: 'toyStore/getIsCreatingToy',
+      createToyResult: 'toyStore/getCreateToyResult',
     }),
     trimmedName() {
       return (this.form.name || '').trim();
@@ -118,7 +84,7 @@ export default {
       return (this.form.image || '').trim();
     },
     isFormBusy() {
-      return Boolean(this.savingToy) || this.localSubmitting;
+      return Boolean(this.isCreatingToy) || this.localSubmitting;
     },
     formBusyMessage() {
       return 'Creating toy...';
@@ -144,7 +110,7 @@ export default {
     },
   },
   watch: {
-    addFormStatus(val) {
+    createToyModalOpen(val) {
       if (val) {
         armModalBackdropObserver(this);
         this.$bvModal.show('modal-add-toy');
@@ -153,9 +119,9 @@ export default {
 
       this.$bvModal.hide('modal-add-toy');
     },
-    saveToyResult(val) {
+    createToyResult(val) {
       if (val && val.id) {
-        this.resetForm();
+        this.resetFormState();
         this.$bvModal.hide('modal-add-toy');
       }
     },
@@ -165,13 +131,9 @@ export default {
     stopModalBackdropObserver(this);
   },
   methods: {
-    ...Vuex.mapActions({
-      createToyBase: 'toyStore/createToy',
-      setAddFormStatus: 'toyStore/setAddFormStatus',
-    }),
-    clearCreateState() {
-      this.$store.commit('toyStore/SET_ERROR_SAVE_TOY', null);
-      this.$store.commit('toyStore/SET_SAVE_TOY_RESULT', null);
+    clearSubmitState() {
+      this.$store.commit('toyStore/SET_CREATE_TOY_ERROR', null);
+      this.$store.commit('toyStore/SET_CREATE_TOY_RESULT', null);
     },
     clearPreviewTimer() {
       if (!this.previewDebounceId) {
@@ -226,7 +188,7 @@ export default {
     resetPreview() {
       this.clearPreviewTimer();
       this.preview = {
-        ...createPreviewState(),
+        ...createFormPreviewState(),
         token: this.preview.token + 1,
       };
     },
@@ -240,7 +202,7 @@ export default {
       this.$queueToyImagePreview(this, immediate);
     },
     handleFieldInput(field) {
-      this.clearCreateState();
+      this.clearSubmitState();
       this.validateField(field);
 
       if (field === 'image') {
@@ -266,8 +228,8 @@ export default {
         image: this.trimmedImage,
       };
     },
-    async createToy() {
-      if (this.localSubmitting || this.savingToy) {
+    async submitCreateToy() {
+      if (this.localSubmitting || this.isCreatingToy) {
         return;
       }
 
@@ -280,33 +242,39 @@ export default {
       this.localSubmitting = true;
 
       try {
-        await this.createToyBase(payload);
+        await this.$store.dispatch('toyStore/submitCreateToy', payload);
       } finally {
         this.localSubmitting = false;
       }
     },
-    onShown() {
+    handleModalShown() {
       this.$nextTick(() => {
-        if (this.$refs.nameInput) {
-          this.$refs.nameInput.focus();
-        }
+        focusFormField(this.$el);
       });
     },
-    onHidden() {
-      stopModalBackdropObserver(this);
-      this.resetForm();
-      this.clearCreateState();
-      this.setAddFormStatus(false);
+    handleModalHidden() {
+      resetManagedForm({
+        stopObserver: () => stopModalBackdropObserver(this),
+        afterReset: () => {
+          this.resetFormState();
+          this.clearSubmitState();
+          this.$store.dispatch('toyStore/setCreateToyModalOpen', false);
+        },
+      });
     },
-    resetForm() {
-      this.form = {
-        name: '',
-        image: '',
-        likes: 0,
+    closeModal() {
+      this.$bvModal.hide('modal-add-toy');
+    },
+    resetFormState() {
+      const lifecycleState = createAddFormState();
+
+      this.form = lifecycleState.form;
+      this.localSubmitting = lifecycleState.localSubmitting;
+      this.preview = {
+        ...lifecycleState.preview,
+        token: this.preview.token + 1,
       };
-      this.validationErrors = createValidationErrors();
-      this.localSubmitting = false;
-      this.resetPreview();
+      this.validationErrors = lifecycleState.validationErrors;
     },
   },
 };

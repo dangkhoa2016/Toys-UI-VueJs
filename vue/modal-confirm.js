@@ -1,67 +1,7 @@
 /*jshint esversion: 9 */
-
-function normalizeBackdrop(backdrop) {
-  if (!backdrop || !backdrop.classList) {
-    return;
-  }
-
-  backdrop.classList.add('fade', 'show');
-}
-
-function findBackdrop(node) {
-  if (!(node instanceof HTMLElement)) {
-    return null;
-  }
-
-  if (node.classList.contains('modal-backdrop')) {
-    return node;
-  }
-
-  return node.querySelector('.modal-backdrop');
-}
-
-function stopModalBackdropObserver(target) {
-  if (!target || !target.backdropObserver) {
-    return;
-  }
-
-  target.backdropObserver.disconnect();
-  target.backdropObserver = null;
-}
-
-function armModalBackdropObserver(target) {
-  if (!target) {
-    return;
-  }
-
-  stopModalBackdropObserver(target);
-
-  const existingBackdrop = document.querySelector('.modal-backdrop');
-  if (existingBackdrop) {
-    normalizeBackdrop(existingBackdrop);
-    return;
-  }
-
-  target.backdropObserver = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      for (const node of mutation.addedNodes) {
-        const backdrop = findBackdrop(node);
-        if (!backdrop) {
-          continue;
-        }
-
-        normalizeBackdrop(backdrop);
-        stopModalBackdropObserver(target);
-        return;
-      }
-    }
-  });
-
-  target.backdropObserver.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
-}
+const MODAL_FORM = Vue.prototype.$modalForm || {};
+const armModalBackdropObserver = MODAL_FORM.armModalBackdropObserver || (() => {});
+const stopModalBackdropObserver = MODAL_FORM.stopModalBackdropObserver || (() => {});
 
 export default {
   data() {
@@ -72,22 +12,22 @@ export default {
   computed: {
     ...Vuex.mapGetters({
       deleteToyResult: 'toyStore/getDeleteToyResult',
-      deletingToy: 'toyStore/getDeletingToy',
-      errorDeleteToy: 'toyStore/getErrorDeleteToy',
-      getCacheToyInfo: 'toyStore/getCacheToyInfo',
-      confirmDeleteToyId: 'toyStore/getConfirmDeleteToyId',
+      isDeletingToy: 'toyStore/getIsDeletingToy',
+      deleteToyError: 'toyStore/getDeleteToyError',
+      getToyById: 'toyStore/getToyById',
+      deleteToyTarget: 'toyStore/getDeleteToyTarget',
     }),
     toyInfo() {
-      const toy = this.getCacheToyInfo(this.confirmDeleteToyId);
+      const toy = this.getToyById(this.deleteToyTarget);
       if (toy)
         return `[${toy.id}] [${toy.name}]`;
     },
     errorAction() {
-      return this.errorDeleteToy || '';
+      return this.deleteToyError || '';
     },
   },
   watch: {
-    confirmDeleteToyId(id) {
+    deleteToyTarget(id) {
       if (id) {
         armModalBackdropObserver(this);
         this.$bvModal.show('modal-delete-toy');
@@ -104,20 +44,15 @@ export default {
     stopModalBackdropObserver(this);
   },
   methods: {
-    ...Vuex.mapActions({
-      setErrorDeleteToy: 'toyStore/setErrorDeleteToy',
-      setConfirmDeleteToyId: 'toyStore/setConfirmDeleteToyId',
-      deleteToy: 'toyStore/deleteToy',
-    }),
-    confirmDeleteToy() {
-      this.deleteToy();
+    submitDeleteToy() {
+      this.$store.dispatch('toyStore/submitDeleteToy');
     },
-    hideModal() {
+    closeModal() {
       this.$bvModal.hide('modal-delete-toy');
     },
-    onHidden() {
+    handleModalHidden() {
       stopModalBackdropObserver(this);
-      this.setConfirmDeleteToyId(null);
+      this.$store.dispatch('toyStore/setDeleteToyTarget', null);
     },
   }
 };

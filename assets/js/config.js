@@ -1,5 +1,15 @@
+const isLocalDevelopmentHost = ['127.0.0.1', 'localhost'].includes(window.location.hostname);
+
+export const TOY_API_URL =
+  window.TOY_API_URL ||
+  (isLocalDevelopmentHost
+    ? 'http://localhost:8080/api/toys'
+    : 'https://humble-space-happiness-946x5q996j276rv-8080.app.github.dev/api/toys');
+
+export const DEMO_DATA_PATH = '/assets/db.json';
+
 export const config = {
-  API_ENDPOINT: 'https://humble-space-happiness-946x5q996j276rv-8080.app.github.dev/api/toys',
+  API_ENDPOINT: TOY_API_URL,
   RETRY_COUNT: 3,
   BACKOFF_MS: 500,
   TIMEOUT_MS: 5000,
@@ -49,4 +59,15 @@ export function toApiImageUrl(image) {
   }
 
   return new URL(normalizedImage, window.location.origin).href;
+}
+
+export function normalizeToy(toy) {
+  const likes = Number.parseInt(toy?.likes ?? 0, 10);
+
+  return {
+    ...toy,
+    name: String(toy?.name ?? '').trim(),
+    image: normalizeToyImageUrl(toy?.image),
+    likes: Number.isFinite(likes) ? Math.max(likes, 0) : 0,
+  };
 }

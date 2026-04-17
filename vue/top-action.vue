@@ -35,7 +35,7 @@
 
               <div class='col-12 col-lg-3 d-grid'>
                 <button class='btn btn-primary toy-create-trigger w-100' id='new-toy-btn' type='button'
-                  @click.prevent='toggleAddFormStatus'>Add a new toy!</button>
+                  @click.prevent='toggleCreateToyModal'>Add a new toy!</button>
               </div>
             </div>
           </div>
@@ -52,12 +52,12 @@
   export default {
     computed: {
       ...Vuex.mapGetters({
-        currentSearchTerm: 'toyStore/getSearchTerm',
-        currentSortOrder: 'toyStore/getSortOrder',
+        searchTermValue: 'toyStore/getSearchTerm',
+        sortOrderValue: 'toyStore/getSortOrder',
       }),
       searchTerm: {
         get() {
-          return this.currentSearchTerm;
+          return this.searchTermValue;
         },
         set(value) {
           this.setSearchTerm(value);
@@ -65,7 +65,7 @@
       },
       sortOrder: {
         get() {
-          return this.currentSortOrder;
+          return this.sortOrderValue;
         },
         set(value) {
           this.setSortOrder(value);
@@ -74,7 +74,7 @@
     },
     methods: {
       ...Vuex.mapActions({
-        toggleAddFormStatus: 'toyStore/toggleAddFormStatus',
+        toggleCreateToyModal: 'toyStore/toggleCreateToyModal',
         setSearchTerm: 'toyStore/setSearchTerm',
         setSortOrder: 'toyStore/setSortOrder',
       }),

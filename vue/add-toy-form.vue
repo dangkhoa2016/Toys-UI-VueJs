@@ -1,18 +1,18 @@
 <template>
 
   <b-modal id='modal-add-toy' centered hide-header hide-footer size='lg'
-    content-class='toy-modal-content border-0' @shown='onShown' @hidden='onHidden'>
+    content-class='toy-modal-content border-0' @shown='handleModalShown' @hidden='handleModalHidden'>
     <div class='modal-header border-0 pb-0'>
       <div>
         <p class='toy-modal-eyebrow mb-2'>Toy workshop</p>
         <h2 id='modal-add-toy-title' class='h3 mb-1'>Create a new toy</h2>
         <p class='text-muted mb-0'>Add a character with a name and an image URL, then send it straight to Andy's shelf.</p>
       </div>
-      <button type='button' class='btn-close' aria-label='Close' @click.prevent='$bvModal.hide("modal-add-toy")'></button>
+      <button type='button' class='btn-close' aria-label='Close' @click.prevent='closeModal()'></button>
     </div>
 
     <div class='modal-body pt-3'>
-      <form id='add-toy-form' class='text-start' novalidate @submit.prevent='createToy'>
+      <form id='add-toy-form' class='text-start' novalidate @submit.prevent='submitCreateToy'>
         <div class='card toy-form-card border-0 shadow-sm mx-auto'>
           <div class='card-body p-4 p-md-4'>
             <div class='row g-3'>
@@ -61,8 +61,8 @@
               </div>
 
               <div class='col-12'>
-                <div role='alert' class='alert alert-danger mb-0' :class="{ 'd-none': !errorSaveToy }">
-                  {{ errorSaveToy }}
+                <div role='alert' class='alert alert-danger mb-0' :class="{ 'd-none': !createToyError }">
+                  {{ createToyError }}
                 </div>
               </div>
             </div>
