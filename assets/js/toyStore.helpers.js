@@ -29,7 +29,7 @@ export function createToyStoreState() {
     deleteToyError: null,
     isDeletingToy: null,
     deleteToyResult: null,
-    deleteToyTarget: null,
+    confirmDeleteToyId: null,
   };
 }
 
@@ -93,7 +93,7 @@ export function updateToyState(state, payload) {
 }
 
 export function removeToyState(state, toyId) {
-  const normalizedId = toyId ? toyId.toString() : (state.deleteToyTarget || '').toString();
+  const normalizedId = toyId ? toyId.toString() : (state.confirmDeleteToyId || '').toString();
   if (!normalizedId) {
     return;
   }
@@ -105,7 +105,7 @@ export function removeToyState(state, toyId) {
 
   state.toys.splice(indx, 1);
   state.totalToys = state.toys.length;
-  state.deleteToyTarget = '';
+  state.confirmDeleteToyId = '';
 }
 
 export function getVisibleToys(state) {

@@ -1,56 +1,30 @@
 /*jshint esversion: 9 */
-
-const TOY_FORM = Vue.prototype.$toyForm || {};
-const TOY_NAME_MIN_LENGTH = TOY_FORM.TOY_NAME_MIN_LENGTH || 2;
-const TOY_NAME_MAX_LENGTH = TOY_FORM.TOY_NAME_MAX_LENGTH || 120;
-const IMAGE_PREVIEW_DEBOUNCE_MS = TOY_FORM.IMAGE_PREVIEW_DEBOUNCE_MS || 300;
-const DEFAULT_PREVIEW_PLACEHOLDER = TOY_FORM.DEFAULT_PREVIEW_PLACEHOLDER || 'Preview will appear here after the image URL is checked.';
-const INVALID_PREVIEW_PLACEHOLDER = TOY_FORM.INVALID_PREVIEW_PLACEHOLDER || 'Enter a valid image URL or local toy image path to preview it.';
-const ERROR_PREVIEW_PLACEHOLDER = TOY_FORM.ERROR_PREVIEW_PLACEHOLDER || 'This image could not be loaded in preview.';
-const CREATE_PREVIEW_MESSAGE = TOY_FORM.CREATE_PREVIEW_MESSAGE || 'Enter an image URL to verify it before submitting.';
-const TOY_IMAGE_FORM_COMPUTED = Vue.prototype.$toyImageFormComputed || {};
-const MODAL_FORM = Vue.prototype.$modalForm || {};
-const armModalBackdropObserver = MODAL_FORM.armModalBackdropObserver || (() => {});
-const stopModalBackdropObserver = MODAL_FORM.stopModalBackdropObserver || (() => {});
-const focusFormField = MODAL_FORM.focusFormField || (() => {});
-const resetManagedForm = MODAL_FORM.resetManagedForm || ((options = {}) => {
-  if (typeof options.afterReset === 'function') {
-    options.afterReset();
-  }
-});
-
-const createValidationErrors = TOY_FORM.createValidationErrors || (() => ({ name: '', image: '' }));
-const createToyFormValues = TOY_FORM.createToyFormValues || (({ toy = null, includeLikes = false } = {}) => {
-  const form = {
-    name: String(toy && toy.name ? toy.name : ''),
-    image: String(toy && toy.image ? toy.image : ''),
-  };
-
-  if (includeLikes) {
-    form.likes = Number.isFinite(toy && toy.likes) ? Number(toy.likes) : 0;
-  }
-
-  return form;
-});
-const createToyFormLifecycleState = TOY_FORM.createToyFormLifecycleState || ((options = {}) => ({
-  form: createToyFormValues(options),
-  localSubmitting: false,
-  preview: createFormPreviewState(),
-  validationErrors: createValidationErrors(),
-}));
+import {
+  TOY_NAME_MIN_LENGTH,
+  TOY_NAME_MAX_LENGTH,
+  IMAGE_PREVIEW_DEBOUNCE_MS,
+  DEFAULT_PREVIEW_PLACEHOLDER,
+  INVALID_PREVIEW_PLACEHOLDER,
+  ERROR_PREVIEW_PLACEHOLDER,
+  CREATE_PREVIEW_MESSAGE,
+  createValidationErrors,
+  createToyFormLifecycleState,
+  createPreviewState,
+} from '/assets/js/toyForm.js';
+import {
+  armModalBackdropObserver,
+  focusFormField,
+  resetManagedForm,
+  stopModalBackdropObserver,
+} from '/assets/js/modalForm.js';
+import {
+  getToyImageError,
+  queueToyImagePreview,
+  toyImageFormComputed,
+} from '/assets/js/toyImageForm.js';
 
 function createFormPreviewState() {
-  const createState = TOY_FORM.createPreviewState;
-  return typeof createState === 'function'
-    ? createState({ message: CREATE_PREVIEW_MESSAGE, placeholderMessage: DEFAULT_PREVIEW_PLACEHOLDER })
-    : {
-        status: 'idle',
-        src: '',
-        source: '',
-        message: CREATE_PREVIEW_MESSAGE,
-        placeholderMessage: DEFAULT_PREVIEW_PLACEHOLDER,
-        token: 0,
-      };
+  return createPreviewState({ message: CREATE_PREVIEW_MESSAGE, placeholderMessage: DEFAULT_PREVIEW_PLACEHOLDER });
 }
 
 function createAddFormState() {
@@ -104,7 +78,7 @@ export default {
     imagePreviewDebounceMs() {
       return IMAGE_PREVIEW_DEBOUNCE_MS;
     },
-    ...TOY_IMAGE_FORM_COMPUTED,
+    ...toyImageFormComputed,
     submitLabel() {
       return this.isFormBusy ? 'Creating toy...' : 'Create New Toy';
     },
@@ -171,7 +145,7 @@ export default {
       }
 
       if (field === 'image') {
-        this.setFieldError('image', this.$getToyImageError(this.trimmedImage));
+        this.setFieldError('image', getToyImageError(this, this.trimmedImage));
       }
     },
     focusFirstInvalidInput() {
@@ -199,7 +173,7 @@ export default {
       };
     },
     queueImagePreview(immediate = false) {
-      this.$queueToyImagePreview(this, immediate);
+      queueToyImagePreview(this, immediate);
     },
     handleFieldInput(field) {
       this.clearSubmitState();

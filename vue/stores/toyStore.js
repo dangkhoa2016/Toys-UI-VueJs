@@ -85,8 +85,8 @@ const mutations = {
   },
 
 
-  SET_DELETE_TOY_TARGET(state, payload) {
-    state.deleteToyTarget = payload;
+  SET_CONFIRM_DELETE_TOY_ID(state, payload) {
+    state.confirmDeleteToyId = payload;
   },
   SET_DELETE_TOY_ERROR(state, payload) {
     state.deleteToyError = payload && payload.error ? payload.error : payload;
@@ -305,13 +305,13 @@ const actions = {
   },
 
 
-  setDeleteToyTarget(context, payload) {
+  setConfirmDeleteToyId(context, payload) {
     const { commit } = context;
-    commit('SET_DELETE_TOY_TARGET', payload);
+    commit('SET_CONFIRM_DELETE_TOY_ID', payload);
   },
 
   async submitDeleteToy(context) {
-    const { commit, dispatch, getters, rootGetters, state: { deleteToyTarget: id } } = context;
+    const { commit, dispatch, getters, rootGetters, state: { confirmDeleteToyId: id } } = context;
     const endpoint = rootGetters['appStore/getEndpoint'];
     const toy = getters.getToyById(id);
 
@@ -389,7 +389,7 @@ const getters = {
       return;
 
     if (!id)
-      id = state.deleteToyTarget;
+      id = state.confirmDeleteToyId;
     if (!id)
       return;
 
@@ -411,7 +411,7 @@ const getters = {
 
   getDeleteToyResult: (state) => state.deleteToyResult,
   getIsDeletingToy: (state) => state.isDeletingToy,
-  getDeleteToyTarget: (state) => state.deleteToyTarget,
+  getConfirmDeleteToyId: (state) => state.confirmDeleteToyId,
   getDeleteToyError: (state) => state.deleteToyError,
 };
 
