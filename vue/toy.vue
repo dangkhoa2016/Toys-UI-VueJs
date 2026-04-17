@@ -2,7 +2,7 @@
 
   <div class='col toy-card-shell' :data-id='toy.id'>
     <article ref='card' class='card toy-card' :class="{ 'is-busy': isBusy }">
-      <img :src='toy.image' :alt='toy.name' class='my-1' loading='lazy' />
+      <img :src='normalizedImageUrl' :alt='toy.name' class='my-1' loading='lazy' />
       <div class='card-body'>
         <h5 class='card-title'>{{ toy.name }}</h5>
         <p class='card-text'><span class='likes-count'>{{ toy.likes }}</span> likes</p>
