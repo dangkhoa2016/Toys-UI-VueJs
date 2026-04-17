@@ -6,6 +6,7 @@ const IMAGE_PREVIEW_DEBOUNCE_MS = 300;
 const DEFAULT_PREVIEW_PLACEHOLDER = 'Preview will appear here after the image URL is checked.';
 const INVALID_PREVIEW_PLACEHOLDER = 'Enter a valid image URL or local toy image path to preview it.';
 const ERROR_PREVIEW_PLACEHOLDER = 'This image could not be loaded in preview.';
+const TOY_IMAGE_FORM_COMPUTED = Vue.prototype.$toyImageFormComputed || {};
 
 function createValidationErrors() {
   return {
@@ -23,35 +24,6 @@ function createPreviewState() {
     placeholderMessage: DEFAULT_PREVIEW_PLACEHOLDER,
     token: 0,
   };
-}
-
-function normalizeImageUrl(value) {
-  if (!value || typeof value !== 'string' || /\s/.test(value)) {
-    return '';
-  }
-
-  try {
-    const parsed = new URL(value.trim(), window.location.origin);
-
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-      return '';
-    }
-
-    return parsed.href;
-  } catch (err) {
-    return '';
-  }
-}
-
-function loadImagePreview(source) {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-
-    image.decoding = 'async';
-    image.onload = () => resolve(source);
-    image.onerror = () => reject(new Error('Image preview could not be loaded.'));
-    image.src = source;
-  });
 }
 
 function normalizeBackdrop(backdrop) {
@@ -158,11 +130,8 @@ export default {
     trimmedImage() {
       return (this.form.image || '').trim();
     },
-    normalizedImageUrl() {
-      return normalizeImageUrl(this.trimmedImage);
-    },
     currentImageUrl() {
-      return normalizeImageUrl(this.editingToy && this.editingToy.image ? this.editingToy.image : '');
+      return this.$normalizeImageUrl(this.editingToy && this.editingToy.image ? this.editingToy.image : '');
     },
     isUnchanged() {
       if (!this.editingToy) {
@@ -171,45 +140,27 @@ export default {
 
       return this.trimmedName === (this.editingToy.name || '').trim() && this.normalizedImageUrl === this.currentImageUrl;
     },
-    previewAlt() {
-      return `${this.trimmedName || 'Toy'} image preview`;
+    formBusyMessage() {
+      return 'Saving changes...';
     },
+    unchangedSubmitMessage() {
+      return this.isUnchanged ? 'Update the name or image to enable save.' : '';
+    },
+    defaultPreviewPlaceholder() {
+      return DEFAULT_PREVIEW_PLACEHOLDER;
+    },
+    errorPreviewPlaceholder() {
+      return ERROR_PREVIEW_PLACEHOLDER;
+    },
+    invalidPreviewPlaceholder() {
+      return INVALID_PREVIEW_PLACEHOLDER;
+    },
+    imagePreviewDebounceMs() {
+      return IMAGE_PREVIEW_DEBOUNCE_MS;
+    },
+    ...TOY_IMAGE_FORM_COMPUTED,
     submitLabel() {
       return this.isFormBusy ? 'Saving changes...' : 'Save Changes';
-    },
-    submitDisableReason() {
-      if (this.isFormBusy) {
-        return 'Saving changes...';
-      }
-
-      if (this.getNameError(this.trimmedName) || this.getImageError(this.trimmedImage)) {
-        return 'Complete the required fields with valid values.';
-      }
-
-      if (this.isUnchanged) {
-        return 'Update the name or image to enable save.';
-      }
-
-      if (!this.normalizedImageUrl) {
-        return 'Enter a valid image URL or local toy image path.';
-      }
-
-      if (this.preview.status === 'error' && this.preview.source === this.normalizedImageUrl) {
-        return 'Use an image that can be loaded in preview.';
-      }
-
-      if (this.preview.source !== this.normalizedImageUrl || this.preview.status === 'pending') {
-        return 'Wait until the image preview finishes loading.';
-      }
-
-      if (this.preview.status !== 'ready') {
-        return 'Wait until the image preview is ready.';
-      }
-
-      return '';
-    },
-    isSubmitDisabled() {
-      return Boolean(this.submitDisableReason);
     },
   },
   watch: {
@@ -283,21 +234,6 @@ export default {
 
       return '';
     },
-    getImageError(value) {
-      if (!value) {
-        return 'Image URL is required.';
-      }
-
-      if (!this.normalizedImageUrl) {
-        return 'Enter an absolute URL or a local toy image path.';
-      }
-
-      if (this.preview.status === 'error' && this.preview.source === this.normalizedImageUrl) {
-        return 'Image preview could not be loaded. Please check the URL or use another image.';
-      }
-
-      return '';
-    },
     setFieldError(field, message) {
       this.validationErrors = {
         ...this.validationErrors,
@@ -311,7 +247,7 @@ export default {
       }
 
       if (field === 'image') {
-        this.setFieldError('image', this.getImageError(this.trimmedImage));
+        this.setFieldError('image', this.$getToyImageError(this.trimmedImage));
       }
     },
     focusFirstInvalidInput() {
@@ -338,92 +274,8 @@ export default {
         ...patch,
       };
     },
-    startPreviewCheck(source, token) {
-      this.setPreviewState({
-        status: 'pending',
-        src: '',
-        source,
-        token,
-        message: 'Checking whether this image can be loaded...',
-        placeholderMessage: 'Checking image preview...',
-      });
-
-      loadImagePreview(source)
-        .then(() => {
-          if (this.preview.token !== token || this.normalizedImageUrl !== source) {
-            return;
-          }
-
-          this.setPreviewState({
-            status: 'ready',
-            src: source,
-            source,
-            message: 'Image preview is ready. This is what the toy card will use.',
-            placeholderMessage: DEFAULT_PREVIEW_PLACEHOLDER,
-          });
-          this.setFieldError('image', '');
-        })
-        .catch(() => {
-          if (this.preview.token !== token || this.normalizedImageUrl !== source) {
-            return;
-          }
-
-          this.setPreviewState({
-            status: 'error',
-            src: '',
-            source,
-            message: 'The image could not be loaded, so submit stays locked.',
-            placeholderMessage: ERROR_PREVIEW_PLACEHOLDER,
-          });
-          this.setFieldError('image', 'Image preview could not be loaded. Please check the URL or use another image.');
-        });
-    },
     queueImagePreview(immediate = false) {
-      this.clearPreviewTimer();
-
-      const imageError = this.getImageError(this.trimmedImage);
-
-      if (imageError && imageError !== 'Image preview could not be loaded. Please check the URL or use another image.') {
-        this.setPreviewState({
-          status: 'idle',
-          src: '',
-          source: '',
-          message: 'Enter a valid image URL or local toy image path to unlock submit.',
-          placeholderMessage: INVALID_PREVIEW_PLACEHOLDER,
-          token: this.preview.token + 1,
-        });
-        return;
-      }
-
-      if (!this.normalizedImageUrl) {
-        this.resetPreview();
-        return;
-      }
-
-      if (this.preview.source === this.normalizedImageUrl && (this.preview.status === 'pending' || this.preview.status === 'ready')) {
-        return;
-      }
-
-      const token = this.preview.token + 1;
-
-      if (immediate) {
-        this.startPreviewCheck(this.normalizedImageUrl, token);
-        return;
-      }
-
-      this.setPreviewState({
-        status: 'pending',
-        src: '',
-        source: this.normalizedImageUrl,
-        token,
-        message: 'Checking whether this image can be loaded...',
-        placeholderMessage: 'Checking image preview...',
-      });
-
-      this.previewDebounceId = window.setTimeout(() => {
-        this.previewDebounceId = 0;
-        this.startPreviewCheck(this.normalizedImageUrl, token);
-      }, IMAGE_PREVIEW_DEBOUNCE_MS);
+      this.$queueToyImagePreview(this, immediate);
     },
     handleFieldInput(field) {
       this.clearUpdateState();

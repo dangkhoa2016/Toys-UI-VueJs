@@ -19,6 +19,9 @@ export default {
       return (this.deletingToy && toyId === (this.confirmDeleteToyId || '').toString())
         || (this.updatingToy && toyId === this.updatingToy.toString());
     },
+    normalizedImageUrl() {
+      return this.$normalizeImageUrl(this.toy && this.toy.image ? this.toy.image : '');
+    },
     highlightSignature() {
       const id = this.highlightedToy && this.highlightedToy.id ? this.highlightedToy.id : '';
       const nonce = this.highlightedToy && this.highlightedToy.nonce ? this.highlightedToy.nonce : 0;

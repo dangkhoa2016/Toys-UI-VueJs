@@ -1,6 +1,18 @@
 /*jshint esversion: 9 */
 import { fetchWithRetry } from '../../assets/js/utils.js';
+import { normalizeToyImageUrl, toApiImageUrl } from '../../assets/js/config/config.js';
 import { toyService } from '../../assets/js/services/api.js';
+
+function normalizeToyRecord(toy) {
+  if (!toy || typeof toy !== 'object') {
+    return toy;
+  }
+
+  return {
+    ...toy,
+    image: normalizeToyImageUrl(toy.image),
+  };
+}
 
 const state = {
   addFormStatus: false,
@@ -66,7 +78,7 @@ const mutations = {
     state.loadingToys = payload;
   },
   SET_TOYS(state, payload) {
-    state.toys = payload;
+    state.toys = Array.isArray(payload) ? payload.map((toy) => normalizeToyRecord(toy)) : [];
   },
   SET_TOTAL_TOYS(state, payload) {
     state.totalToys = payload;
@@ -119,19 +131,21 @@ const mutations = {
   },
 
   PREPEND_TOY(state, payload) {
-    state.toys = [payload, ...state.toys.filter((toy) => toy.id.toString() !== payload.id.toString())];
+    const normalizedPayload = normalizeToyRecord(payload);
+    state.toys = [normalizedPayload, ...state.toys.filter((toy) => toy.id.toString() !== normalizedPayload.id.toString())];
     state.totalToys = state.toys.length;
   },
 
 
   INTERNAL_UPDATE_DATA(state, payload) {
+    const normalizedPayload = normalizeToyRecord(payload);
     const toys = [...state.toys];
-    const id = payload.id.toString();
+    const id = normalizedPayload.id.toString();
     const indx = toys.findIndex(n => n.id.toString() === id);
     if (indx !== -1)
-      toys[indx] = { ...toys[indx], ...payload };
+      toys[indx] = { ...toys[indx], ...normalizedPayload };
     else
-      toys.push(payload);
+      toys.push(normalizedPayload);
     state.toys = [...toys];
     state.totalToys = state.toys.length;
   },
@@ -261,20 +275,7 @@ const actions = {
   },
 
   toApiImageUrl(context, value) {
-    if (!value || typeof (value) !== 'string') {
-      return '';
-    }
-
-    value = value.trim();
-    if (!value) {
-      return '';
-    }
-
-    if (/^\s*https?:\/\//.test(value)) {
-      return value;
-    }
-
-    return new URL(value, window.location.origin).href;
+    return toApiImageUrl(value);
   },
 
   async importDemo(context) {
