@@ -11,7 +11,8 @@ export default {
     return {
       emptyStateError: '',
       seedingDemo: false,
-      skeletonCount: 8,
+      skeletonCount: 4,
+      wrapperClass: 'row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4',
     };
   },
   computed: {
@@ -19,6 +20,7 @@ export default {
       toys: 'toyStore/getVisibleToys',
       allToys: 'toyStore/getToys',
       isLoadingToys: 'toyStore/getIsLoadingToys',
+      isAutoSeeding: 'toyStore/getIsAutoSeeding',
       loadToysError: 'toyStore/getLoadToysError',
     }),
     hasToys() {

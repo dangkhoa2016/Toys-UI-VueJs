@@ -207,7 +207,9 @@ img {
 #toy-collection {
   min-height: calc(100vh - 20rem);
 }
-
+.toy-collection-skeleton {
+  min-height: auto !important;
+}
 .toy-skeleton-list {
   display: contents;
 }
@@ -215,6 +217,7 @@ img {
 .toy-card,
 .toy-card-skeleton {
   border: 0;
+  margin: 0.5rem;
   box-shadow: 0 10px 30px rgba(81, 93, 162, 0.14);
 }
 

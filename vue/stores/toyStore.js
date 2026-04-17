@@ -19,7 +19,7 @@ import {
 import {
   createToy as createToyRequest,
   deleteToy as deleteToyRequest,
-  fetchOrSeedToys,
+  fetchToys,
   likeToy as likeToyRequest,
   seedDemoToys,
   updateToy as updateToyRequest,
@@ -56,6 +56,9 @@ const mutations = {
   },
   SET_IS_LOADING_TOYS(state, payload) {
     state.isLoadingToys = payload;
+  },
+  SET_IS_AUTO_SEEDING(state, payload) {
+    state.isAutoSeeding = payload;
   },
   SYNC_TOYS(state, payload) {
     syncToyState(state, payload);
@@ -184,11 +187,20 @@ const actions = {
     const endpoint = rootGetters['appStore/getEndpoint'];
 
     commit('SET_IS_LOADING_TOYS', true);
+    commit('SET_IS_AUTO_SEEDING', false);
     commit('SET_LOAD_TOYS_ERROR', null);
     commit('SYNC_TOYS', []);
 
     try {
-      const result = await fetchOrSeedToys(endpoint);
+      let result = await fetchToys(endpoint);
+
+      if (result.length === 0) {
+        commit('SET_IS_AUTO_SEEDING', true);
+        await seedDemoToys(endpoint);
+        result = await fetchToys(endpoint);
+        commit('SET_IS_AUTO_SEEDING', false);
+      }
+
       commit('SET_IS_LOADING_TOYS', false);
       commit('SYNC_TOYS', result);
       commit('SET_TOTAL_TOYS', result.length);
@@ -196,6 +208,7 @@ const actions = {
     } catch (err) {
       console.error('Error load toys', err);
       commit('SET_IS_LOADING_TOYS', false);
+      commit('SET_IS_AUTO_SEEDING', false);
       commit('SET_LOAD_TOYS_ERROR', err);
       dispatch('addToast', {
         title: 'Unable to load toys',
@@ -416,6 +429,7 @@ const getters = {
 
   getLoadToysError: (state) => state.loadToysError,
   getIsLoadingToys: (state) => state.isLoadingToys,
+  getIsAutoSeeding: (state) => state.isAutoSeeding,
 
   getCreateToyError: (state) => state.createToyError,
   getIsCreatingToy: (state) => state.isCreatingToy,
