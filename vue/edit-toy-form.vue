@@ -22,9 +22,9 @@
 
               <div class='col-12 col-md-6'>
                 <label for='edit-toy-name' class='form-label'>Toy name</label>
-                <input id='edit-toy-name' ref='nameInput' type='text' name='name' v-model='form.name' :disabled='isUpdating'
-                  placeholder="Update the toy's name..." class='form-control' autocomplete='off'
-                  @input='clearFieldError("name")' :class="{ 'is-invalid': Boolean(validationErrors.name) }"
+                <input id='edit-toy-name' ref='nameInput' type='text' name='name' v-model='form.name' :disabled='isFormBusy'
+                  placeholder="Update the toy's name..." class='form-control' autocomplete='off' required minlength='2' maxlength='120'
+                  @input='handleFieldInput("name")' :class="{ 'is-invalid': Boolean(validationErrors.name) }"
                   :aria-invalid='Boolean(validationErrors.name)' :aria-describedby='validationErrors.name ? "edit-toy-name-error" : null' />
                 <div v-if='validationErrors.name' id='edit-toy-name-error' class='invalid-feedback d-block'>
                   {{ validationErrors.name }}
@@ -33,20 +33,35 @@
 
               <div class='col-12 col-md-6'>
                 <label for='edit-toy-image' class='form-label'>Image URL</label>
-                <input id='edit-toy-image' type='text' name='image' v-model='form.image' :disabled='isUpdating'
-                  placeholder="Update the toy's image URL..." class='form-control' autocomplete='off'
-                  @input='clearFieldError("image")' :class="{ 'is-invalid': Boolean(validationErrors.image) }"
+                <input id='edit-toy-image' type='text' name='image' v-model='form.image' :disabled='isFormBusy'
+                  placeholder="Update the toy's image URL..." class='form-control' autocomplete='off' required
+                  @input='handleFieldInput("image")' :class="{ 'is-invalid': Boolean(validationErrors.image) }"
                   :aria-invalid='Boolean(validationErrors.image)' :aria-describedby='validationErrors.image ? "edit-toy-image-error" : null' />
                 <div v-if='validationErrors.image' id='edit-toy-image-error' class='invalid-feedback d-block'>
                   {{ validationErrors.image }}
                 </div>
               </div>
 
+              <div class='col-12'>
+                <div class='toy-preview-shell'>
+                  <div class='toy-preview-frame' :data-preview-state='preview.status'>
+                    <div v-if='preview.status === "pending"' class='toy-preview-loader' aria-hidden='true'>
+                      <span class='spinner-border spinner-border-sm toy-preview-loader-spinner' aria-hidden='true'></span>
+                      <span class='toy-preview-loader-label'>Checking image preview...</span>
+                    </div>
+                    <img v-else-if='preview.status === "ready" && preview.src' class='toy-preview-image' :src='preview.src' :alt='previewAlt' />
+                    <div v-else class='toy-preview-placeholder'>{{ preview.placeholderMessage }}</div>
+                  </div>
+                  <p class='form-text toy-preview-status mb-0' aria-live='polite'>{{ preview.message }}</p>
+                </div>
+              </div>
+
               <div class='col-12 toy-form-actions d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2 gap-md-3'>
-                <button type='submit' name='submit' class='btn btn-primary px-4 toy-form-submit' :disabled='isUpdating'>
-                  {{ isUpdating ? 'Saving...' : 'Save Changes' }}
+                <button type='submit' name='submit' class='btn btn-primary px-4 toy-form-submit' :disabled='isSubmitDisabled'
+                  :aria-disabled='isSubmitDisabled' :title='submitDisableReason || null'>
+                  {{ submitLabel }}
                 </button>
-                <span class='form-text toy-form-hint my-0'>Changes are sent to the API immediately after you save.</span>
+                <span class='form-text toy-form-hint my-0'>Only valid changes are sent, so you get faster feedback and fewer wasted requests.</span>
               </div>
 
               <div class='col-12'>

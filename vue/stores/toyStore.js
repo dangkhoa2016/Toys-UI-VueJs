@@ -344,8 +344,10 @@ const actions = {
   async updateToy(context, payload) {
     const { commit, dispatch, getters, rootGetters } = context;
     const endpoint = rootGetters['appStore/getEndpoint'];
-    const { id, name = '', image = '' } = payload || {};
+    let { id, name = '', image = '' } = payload || {};
     const currentToy = getters.getCacheToyInfo(id);
+
+    image = await dispatch('toApiImageUrl', image);
 
     if (!currentToy) {
       dispatch('pushToast', {
