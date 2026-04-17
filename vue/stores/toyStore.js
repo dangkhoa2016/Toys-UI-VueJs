@@ -97,6 +97,17 @@ const mutations = {
   SET_DELETE_TOY_RESULT(state, payload) {
     state.deleteToyResult = payload;
   },
+  SET_LIKING_TOY_ID(state, payload) {
+    state.likingToyId = payload;
+  },
+  ADD_LIKING_TOY_ID(state, payload) {
+    if (payload && !state.likingToyIds.includes(payload)) {
+      state.likingToyIds = [...state.likingToyIds, payload];
+    }
+  },
+  REMOVE_LIKING_TOY_ID(state, payload) {
+    state.likingToyIds = state.likingToyIds.filter((id) => id !== payload);
+  },
   REMOVE_DELETE_TARGET_TOY(state) {
     removeToyState(state);
   },
@@ -349,6 +360,9 @@ const actions = {
     const toy = getters.getToyById(id);
     if (!toy) return;
 
+    const toyIdStr = id ? id.toString() : null;
+    commit('ADD_LIKING_TOY_ID', toyIdStr);
+
     try {
       const result = await likeToyRequest(toy, endpoint);
       commit('UPSERT_TOY', result);
@@ -369,6 +383,8 @@ const actions = {
         delay: 5000,
       });
       return { error: err.message };
+    } finally {
+      commit('REMOVE_LIKING_TOY_ID', toyIdStr);
     }
   },
 
@@ -413,6 +429,7 @@ const getters = {
   getIsDeletingToy: (state) => state.isDeletingToy,
   getConfirmDeleteToyId: (state) => state.confirmDeleteToyId,
   getDeleteToyError: (state) => state.deleteToyError,
+  getLikingToyIds: (state) => state.likingToyIds,
 };
 
 export const toyStore = {

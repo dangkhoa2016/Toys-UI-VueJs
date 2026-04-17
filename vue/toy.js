@@ -15,11 +15,13 @@ export default {
       confirmDeleteToyId: 'toyStore/getConfirmDeleteToyId',
       highlightedToy: 'toyStore/getHighlightedToy',
       updatingToyId: 'toyStore/getUpdatingToyId',
+      likingToyIds: 'toyStore/getLikingToyIds',
     }),
     isBusy() {
       const toyId = this.toy && this.toy.id ? this.toy.id.toString() : '';
       return (this.isDeletingToy && toyId === (this.confirmDeleteToyId || '').toString())
-        || (this.updatingToyId && toyId === this.updatingToyId.toString());
+        || (this.updatingToyId && toyId === this.updatingToyId.toString())
+        || (Array.isArray(this.likingToyIds) && this.likingToyIds.includes(toyId));
     },
     normalizedImageUrl() {
       return normalizeImageUrl(this.toy && this.toy.image ? this.toy.image : '');
