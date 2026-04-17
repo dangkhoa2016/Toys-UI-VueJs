@@ -30,6 +30,7 @@ export function createToyStoreState() {
     isDeletingToy: null,
     deleteToyResult: null,
     confirmDeleteToyId: null,
+    likingToyIds: [],
   };
 }
 
