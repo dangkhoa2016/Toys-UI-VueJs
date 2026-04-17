@@ -29,12 +29,13 @@
   export default {
     computed: {
       ...Vuex.mapGetters({
-        loadingToys: 'toyStore/getLoadingToys',
-        savingToy: 'toyStore/getSavingToy',
-        // deletingToy: 'toyStore/getDeletingToy',
+        isLoadingToys: 'toyStore/getIsLoadingToys',
+        isCreatingToy: 'toyStore/getIsCreatingToy',
+        // isDeletingToy: 'toyStore/getIsDeletingToy',
+        isUpdatingToy: 'toyStore/getUpdatingToyId',
       }),
       loading() {
-        return this.loadingToys || this.savingToy;
+        return this.isLoadingToys || this.isCreatingToy /* || this.isDeletingToy */ || this.isUpdatingToy;
       },
     },
   };

@@ -1,5 +1,11 @@
 /*jshint esversion: 9 */
 
+const TOY_STORE_HELPERS = Vue.prototype.$toyStoreHelpers || {};
+const getHighlightedToySignature = TOY_STORE_HELPERS.getHighlightedToySignature || ((state) => {
+  const highlightedToy = state && state.highlightedToy ? state.highlightedToy : { id: null, nonce: 0 };
+  return `${highlightedToy.id || ''}:${highlightedToy.nonce || 0}`;
+});
+
 export default {
   props: {
     toy: {
@@ -9,48 +15,41 @@ export default {
   },
   computed: {
     ...Vuex.mapGetters({
-      deletingToy: 'toyStore/getDeletingToy',
-      confirmDeleteToyId: 'toyStore/getConfirmDeleteToyId',
+      isDeletingToy: 'toyStore/getIsDeletingToy',
+      deleteToyTarget: 'toyStore/getDeleteToyTarget',
       highlightedToy: 'toyStore/getHighlightedToy',
-      updatingToy: 'toyStore/getUpdatingToy',
+      updatingToyId: 'toyStore/getUpdatingToyId',
     }),
     isBusy() {
       const toyId = this.toy && this.toy.id ? this.toy.id.toString() : '';
-      return (this.deletingToy && toyId === (this.confirmDeleteToyId || '').toString())
-        || (this.updatingToy && toyId === this.updatingToy.toString());
+      return (this.isDeletingToy && toyId === (this.deleteToyTarget || '').toString())
+        || (this.updatingToyId && toyId === this.updatingToyId.toString());
     },
     normalizedImageUrl() {
       return this.$normalizeImageUrl(this.toy && this.toy.image ? this.toy.image : '');
     },
     highlightSignature() {
-      const id = this.highlightedToy && this.highlightedToy.id ? this.highlightedToy.id : '';
-      const nonce = this.highlightedToy && this.highlightedToy.nonce ? this.highlightedToy.nonce : 0;
-      return `${id}:${nonce}`;
+      return getHighlightedToySignature({ highlightedToy: this.highlightedToy });
     },
   },
   watch: {
     highlightSignature() {
       const toyId = this.toy && this.toy.id ? this.toy.id.toString() : '';
       if (toyId && this.highlightedToy && this.highlightedToy.id === toyId) {
-        this.triggerHighlight();
+        this.flashToyCard();
       }
     },
   },
   methods: {
-    ...Vuex.mapActions({
-      setConfirmDeleteToyId: 'toyStore/setConfirmDeleteToyId',
-      likeToyBase: 'toyStore/likeToy',
-      setEditingToyId: 'toyStore/setEditingToyId',
-    }),
-    setConfirmDeleteToy() {
+    openDeleteToyConfirm() {
       if (this.toy && this.toy.id)
-        this.setConfirmDeleteToyId(this.toy.id);
+        this.$store.dispatch('toyStore/setDeleteToyTarget', this.toy.id);
     },
-    editToy() {
+    openEditToy() {
       if (this.toy && this.toy.id)
-        this.setEditingToyId(this.toy.id);
+        this.$store.dispatch('toyStore/setEditingToy', this.toy.id);
     },
-    triggerHighlight() {
+    flashToyCard() {
       const card = this.$refs.card;
       if (!card) {
         return;
@@ -63,9 +62,9 @@ export default {
         card.classList.remove('toy-card-updated');
       }, { once: true });
     },
-    likeToy() {
+    incrementToyLikes() {
       if (this.toy && this.toy.id)
-        this.likeToyBase(this.toy.id);
+        this.$store.dispatch('toyStore/incrementToyLikes', this.toy.id);
     },
   },
 };

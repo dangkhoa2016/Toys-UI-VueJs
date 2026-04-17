@@ -2,7 +2,7 @@
 
   <div id='toast-region' class='toast-container position-fixed top-0 end-0 p-3'>
     <transition-group name='toy-toast' tag='div' class='d-flex flex-column gap-3'>
-      <div v-for='toast in toasts' :key='toast.id' class='toast show toy-toast' :class='`toy-toast-${toast.variant || "primary"}`'
+      <div v-for='toast in toastList' :key='toast.id' class='toast show toy-toast' :class='`toy-toast-${toast.variant || "primary"}`'
         role='status' aria-live='polite' aria-atomic='true'>
         <div class='d-flex justify-content-between'>
           <div class='toast-body'>
@@ -28,11 +28,11 @@
     },
     computed: {
       ...Vuex.mapGetters({
-        toasts: 'toyStore/getToasts',
+        toastList: 'toyStore/getToasts',
       }),
     },
     watch: {
-      toasts: {
+      toastList: {
         immediate: true,
         handler(nextToasts) {
           const activeIds = new Set(nextToasts.map((toast) => toast.id));
@@ -65,16 +65,13 @@
       this.toastTimers = {};
     },
     methods: {
-      ...Vuex.mapActions({
-        removeToast: 'toyStore/removeToast',
-      }),
       dismissToast(toastId) {
         if (this.toastTimers[toastId]) {
           window.clearTimeout(this.toastTimers[toastId]);
           delete this.toastTimers[toastId];
         }
 
-        this.removeToast(toastId);
+        this.$store.dispatch('toyStore/removeToast', toastId);
       },
     },
   };
