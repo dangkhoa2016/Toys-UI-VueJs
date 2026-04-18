@@ -2,6 +2,7 @@
 import { appStore } from '../../vue/stores/appStore.js';
 import { toyStore } from '../../vue/stores/toyStore.js';
 import { handleErrors, sleep, fetchWithRetry } from './utils.js';
+import * as configModule from './config/config.js';
 import * as toyFormModule from './toyForm.js';
 import * as modalFormModule from './modalForm.js';
 import * as toyVueJsFormModule from './toyVueJsForm.js';
@@ -12,6 +13,7 @@ const { loadModule } = window['vue2-sfc-loader'];
 const options = {
   moduleCache: {
     vue: Vue,
+    '/assets/js/config/config.js': configModule,
     '/assets/js/toyForm.js': toyFormModule,
     '/assets/js/modalForm.js': modalFormModule,
     '/assets/js/toyVueJsForm.js': toyVueJsFormModule,

@@ -1,10 +1,18 @@
 /*jshint esversion: 9 */
 
+import { TOY_NETWORK_SETTINGS } from './config/config.js';
+
 export function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export async function fetchWithRetry(url, options = {}, retries = 3, backoff = 500, timeout = 5000) {
+export async function fetchWithRetry(
+  url,
+  options = {},
+  retries = TOY_NETWORK_SETTINGS.RETRY_COUNT,
+  backoff = TOY_NETWORK_SETTINGS.BACKOFF_MS,
+  timeout = TOY_NETWORK_SETTINGS.TIMEOUT_MS
+) {
   for (let i = 0; i < retries; i++) {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
