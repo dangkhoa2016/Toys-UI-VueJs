@@ -18,34 +18,34 @@
             <div class='row g-3'>
               <div class='col-12 col-md-6'>
                 <label for='toy-name-input' class='form-label'>Toy name</label>
-                <input id='toy-name-input' ref='nameInput' type='text' name='name' v-model='form.name' :disabled='isFormBusy'
-                  placeholder="Enter a toy's name..." class='form-control' autocomplete='off' required minlength='2' maxlength='120'
-                  @input='handleFieldInput("name")' :class="{ 'is-invalid': Boolean(validationErrors.name) }"
-                  :aria-invalid='Boolean(validationErrors.name)' :aria-describedby='validationErrors.name ? "toy-name-error" : null' />
-                <div v-if='validationErrors.name' id='toy-name-error' class='invalid-feedback d-block'>
-                  {{ validationErrors.name }}
+                <input id='toy-name-input' ref='nameInput' type='text' :name='nameField' v-model='form[nameField]' :disabled='isFormBusy'
+                  placeholder="Enter a toy's name..." class='form-control' autocomplete='off' required :minlength='nameMinLength' :maxlength='nameMaxLength'
+                  @input='handleFieldInput(nameField)' :class="{ 'is-invalid': Boolean(validationErrors[nameField]) }"
+                  :aria-invalid='Boolean(validationErrors[nameField])' :aria-describedby='validationErrors[nameField] ? "toy-name-error" : null' />
+                <div v-if='validationErrors[nameField]' id='toy-name-error' class='invalid-feedback d-block'>
+                  {{ validationErrors[nameField] }}
                 </div>
               </div>
 
               <div class='col-12 col-md-6'>
                 <label for='toy-image-input' class='form-label'>Image URL</label>
-                <input id='toy-image-input' type='text' name='image' v-model='form.image' :disabled='isFormBusy'
+                <input id='toy-image-input' type='text' :name='imageField' v-model='form[imageField]' :disabled='isFormBusy'
                   placeholder="Enter a toy's image URL..." class='form-control' autocomplete='off' required
-                  @input='handleFieldInput("image")' :class="{ 'is-invalid': Boolean(validationErrors.image) }"
-                  :aria-invalid='Boolean(validationErrors.image)' :aria-describedby='validationErrors.image ? "toy-image-error" : null' />
-                <div v-if='validationErrors.image' id='toy-image-error' class='invalid-feedback d-block'>
-                  {{ validationErrors.image }}
+                  @input='handleFieldInput(imageField)' :class="{ 'is-invalid': Boolean(validationErrors[imageField]) }"
+                  :aria-invalid='Boolean(validationErrors[imageField])' :aria-describedby='validationErrors[imageField] ? "toy-image-error" : null' />
+                <div v-if='validationErrors[imageField]' id='toy-image-error' class='invalid-feedback d-block'>
+                  {{ validationErrors[imageField] }}
                 </div>
               </div>
 
               <div class='col-12'>
                 <div class='toy-preview-shell'>
                   <div class='toy-preview-frame' :data-preview-state='preview.status'>
-                    <div v-if='preview.status === "pending"' class='toy-preview-loader' aria-hidden='true'>
+                    <div v-if='preview.status === previewStatus.PENDING' class='toy-preview-loader' aria-hidden='true'>
                       <span class='spinner-border spinner-border-sm toy-preview-loader-spinner' aria-hidden='true'></span>
                       <span class='toy-preview-loader-label'>Checking image preview...</span>
                     </div>
-                    <img v-else-if='preview.status === "ready" && preview.src' class='toy-preview-image' :src='preview.src' :alt='previewAlt' />
+                    <img v-else-if='preview.status === previewStatus.READY && preview.src' class='toy-preview-image' :src='preview.src' :alt='previewAlt' />
                     <div v-else class='toy-preview-placeholder'>{{ preview.placeholderMessage }}</div>
                   </div>
                   <p class='form-text toy-preview-status mb-0' aria-live='polite'>{{ preview.message }}</p>

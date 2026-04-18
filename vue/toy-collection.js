@@ -1,6 +1,7 @@
 /*jshint esversion: 9 */
 import Toy from './toy.vue';
 import ToySkeleton from './toy-skeleton.vue';
+import { TOY_TEMPLATE_SETTINGS } from '/assets/js/config.js';
 
 export default {
   components: {
@@ -11,7 +12,7 @@ export default {
     return {
       emptyStateError: '',
       seedingDemo: false,
-      skeletonCount: 4,
+      skeletonCount: TOY_TEMPLATE_SETTINGS.SKELETON_CARD_COUNT,
       wrapperClass: 'row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4',
     };
   },

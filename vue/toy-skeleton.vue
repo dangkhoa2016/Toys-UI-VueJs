@@ -21,11 +21,13 @@
 <script>
   /*jshint esversion: 9 */
 
+  import { TOY_TEMPLATE_SETTINGS } from '/assets/js/config.js';
+
   export default {
     props: {
       count: {
         type: Number,
-        default: 8,
+        default: TOY_TEMPLATE_SETTINGS.SKELETON_CARD_COUNT,
       },
     },
   };

@@ -36,6 +36,7 @@ import MosaicLoader from './mosaic-loader.vue';
 import TopAction from './top-action.vue';
 import ModalConfirm from './modal-confirm.vue';
 import ToastRegion from './toast-region.vue';
+import { TOY_UI_LIMITS } from '/assets/js/config.js';
 
 export default {
   components: {
@@ -54,7 +55,7 @@ export default {
   },
   methods: {
     handleScroll(ev) {
-      this.showGoToTop = window.scrollY > 300;
+      this.showGoToTop = window.scrollY > TOY_UI_LIMITS.SCROLL_TOP_VISIBLE_OFFSET_PX;
     },
     goToTop() {
       window.scrollTo(0, 0);

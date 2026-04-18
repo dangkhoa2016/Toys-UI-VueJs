@@ -1,4 +1,10 @@
-import { normalizeToy } from './config.js';
+import {
+  normalizeToy,
+  TOY_SORT_ORDERS,
+  TOY_SORT_ORDER_VALUES,
+  TOY_TOAST_SETTINGS,
+  TOY_TOAST_VARIANTS,
+} from './config.js';
 
 export function createHighlightedToyState({ id = null, nonce = 0 } = {}) {
   return {
@@ -12,7 +18,7 @@ export function createToyStoreState() {
     createToyModalOpen: false,
     editingToyId: null,
     searchTerm: '',
-    sortOrder: 'default',
+    sortOrder: TOY_SORT_ORDERS.DEFAULT,
     toasts: [],
     highlightedToy: createHighlightedToyState(),
     toys: [],
@@ -36,7 +42,7 @@ export function createToyStoreState() {
 }
 
 export function normalizeSortOrder(payload) {
-  return ['default', 'likes-desc', 'likes-asc'].includes(payload) ? payload : 'default';
+  return TOY_SORT_ORDER_VALUES.includes(payload) ? payload : TOY_SORT_ORDERS.DEFAULT;
 }
 
 export function setSearchTerm(state, payload) {
@@ -117,11 +123,11 @@ export function getVisibleToys(state) {
     ? toys.filter((toy) => (toy.name || '').toLowerCase().includes(normalizedSearchTerm))
     : toys;
 
-  if (state.sortOrder === 'likes-desc') {
+  if (state.sortOrder === TOY_SORT_ORDERS.LIKES_DESC) {
     return filteredToys.sort((left, right) => right.likes - left.likes || left.name.localeCompare(right.name));
   }
 
-  if (state.sortOrder === 'likes-asc') {
+  if (state.sortOrder === TOY_SORT_ORDERS.LIKES_ASC) {
     return filteredToys.sort((left, right) => left.likes - right.likes || left.name.localeCompare(right.name));
   }
 
@@ -131,10 +137,10 @@ export function getVisibleToys(state) {
 export function createToastPayload(payload) {
   return {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    title: payload && payload.title ? payload.title : 'Toy Tale',
+    title: payload && payload.title ? payload.title : TOY_TOAST_SETTINGS.DEFAULT_TITLE,
     message: payload && payload.message ? payload.message : '',
-    variant: payload && payload.variant ? payload.variant : 'primary',
-    delay: payload && payload.delay ? payload.delay : 5000,
+    variant: payload && payload.variant ? payload.variant : TOY_TOAST_VARIANTS.PRIMARY,
+    delay: payload && payload.delay ? payload.delay : TOY_TOAST_SETTINGS.DEFAULT_DELAY_MS,
   };
 }
 

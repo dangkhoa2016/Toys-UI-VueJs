@@ -12,6 +12,10 @@ import {
   createPreviewState,
 } from '/assets/js/toyForm.js';
 import {
+  TOY_FORM_FIELD_NAMES,
+  TOY_PREVIEW_STATUS,
+} from '/assets/js/config.js';
+import {
   armModalBackdropObserver,
   focusFormField,
   resetManagedForm,
@@ -67,10 +71,25 @@ export default {
       return `#${this.editingToy.id} ${this.editingToy.name}`;
     },
     trimmedName() {
-      return (this.form.name || '').trim();
+      return (this.form[this.nameField] || '').trim();
     },
     trimmedImage() {
-      return (this.form.image || '').trim();
+      return (this.form[this.imageField] || '').trim();
+    },
+    nameField() {
+      return TOY_FORM_FIELD_NAMES.NAME;
+    },
+    imageField() {
+      return TOY_FORM_FIELD_NAMES.IMAGE;
+    },
+    previewStatus() {
+      return TOY_PREVIEW_STATUS;
+    },
+    nameMinLength() {
+      return TOY_NAME_MIN_LENGTH;
+    },
+    nameMaxLength() {
+      return TOY_NAME_MAX_LENGTH;
     },
     currentImageUrl() {
       return normalizeImageUrl(this.editingToy && this.editingToy.image ? this.editingToy.image : '');
@@ -178,17 +197,17 @@ export default {
       };
     },
     validateField(field) {
-      if (field === 'name') {
-        this.setFieldError('name', this.getNameError(this.trimmedName));
+      if (field === this.nameField) {
+        this.setFieldError(this.nameField, this.getNameError(this.trimmedName));
         return;
       }
 
-      if (field === 'image') {
-        this.setFieldError('image', getToyImageError(this, this.trimmedImage));
+      if (field === this.imageField) {
+        this.setFieldError(this.imageField, getToyImageError(this, this.trimmedImage));
       }
     },
     focusFirstInvalidInput() {
-      if (this.validationErrors.name && this.$refs.nameInput) {
+      if (this.validationErrors[this.nameField] && this.$refs.nameInput) {
         this.$refs.nameInput.focus();
         return;
       }
@@ -218,16 +237,16 @@ export default {
       this.clearSubmitState();
       this.validateField(field);
 
-      if (field === 'image') {
+      if (field === this.imageField) {
         this.queueImagePreview(false);
       }
     },
     validateForm() {
       this.validationErrors = createValidationErrors();
-      this.validateField('name');
-      this.validateField('image');
+      this.validateField(this.nameField);
+      this.validateField(this.imageField);
 
-      if (this.validationErrors.name || this.validationErrors.image) {
+      if (this.validationErrors[this.nameField] || this.validationErrors[this.imageField]) {
         return null;
       }
 
@@ -236,8 +255,8 @@ export default {
       }
 
       return {
-        name: this.trimmedName,
-        image: this.trimmedImage,
+        [this.nameField]: this.trimmedName,
+        [this.imageField]: this.trimmedImage,
       };
     },
     async submitUpdateToy() {

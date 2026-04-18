@@ -2,7 +2,7 @@
 
   <div id='toast-region' class='toast-container position-fixed top-0 end-0 p-3'>
     <transition-group name='toy-toast' tag='div' class='d-flex flex-column gap-3'>
-      <div v-for='toast in toastList' :key='toast.id' class='toast show toy-toast' :class='`toy-toast-${toast.variant || "primary"}`'
+      <div v-for='toast in toastList' :key='toast.id' class='toast show toy-toast' :class='`toy-toast-${toast.variant || toastVariants.PRIMARY}`'
         role='status' aria-live='polite' aria-atomic='true'>
         <div class='d-flex justify-content-between'>
           <div class='toast-body'>
@@ -20,10 +20,14 @@
 <script>
   /*jshint esversion: 9 */
 
+  import { TOY_TOAST_SETTINGS, TOY_TOAST_VARIANTS } from '/assets/js/config.js';
+
   export default {
     data() {
       return {
         toastTimers: {},
+        toastSettings: TOY_TOAST_SETTINGS,
+        toastVariants: TOY_TOAST_VARIANTS,
       };
     },
     computed: {
@@ -44,7 +48,7 @@
 
             this.toastTimers[toast.id] = window.setTimeout(() => {
               this.dismissToast(toast.id);
-            }, toast.delay || 5000);
+            }, toast.delay || this.toastSettings.DEFAULT_DELAY_MS);
           });
 
           Object.keys(this.toastTimers).forEach((toastId) => {

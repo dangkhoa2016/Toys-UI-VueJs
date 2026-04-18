@@ -26,9 +26,9 @@
                 <label class='toy-field h-100 d-flex flex-column'>
                   <span class='toy-field-label'>Sort by likes</span>
                   <select id='toy-sort' class='form-select toy-control-input' v-model='sortOrder'>
-                    <option value='default'>Default order</option>
-                    <option value='likes-desc'>Most liked first</option>
-                    <option value='likes-asc'>Least liked first</option>
+                    <option :value='sortOrders.DEFAULT'>Default order</option>
+                    <option :value='sortOrders.LIKES_DESC'>Most liked first</option>
+                    <option :value='sortOrders.LIKES_ASC'>Least liked first</option>
                   </select>
                 </label>
               </div>
@@ -49,7 +49,14 @@
 <script>
   /*jshint esversion: 9 */
 
+  import { TOY_SORT_ORDERS } from '/assets/js/config.js';
+
   export default {
+    data() {
+      return {
+        sortOrders: TOY_SORT_ORDERS,
+      };
+    },
     computed: {
       ...Vuex.mapGetters({
         searchTermValue: 'toyStore/getSearchTerm',

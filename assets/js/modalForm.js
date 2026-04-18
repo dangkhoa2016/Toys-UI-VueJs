@@ -1,3 +1,5 @@
+import { TOY_FORM_FIELD_NAMES } from './config.js';
+
 export function normalizeBackdrop(backdrop) {
   if (!backdrop || !backdrop.classList) {
     return;
@@ -61,7 +63,7 @@ export function armModalBackdropObserver(target) {
   });
 }
 
-export function focusFormField(root, selector = "[name='name']") {
+export function focusFormField(root, selector = `[name='${TOY_FORM_FIELD_NAMES.NAME}']`) {
   const container = root instanceof HTMLElement ? root : document;
   container.querySelector(selector)?.focus();
 }

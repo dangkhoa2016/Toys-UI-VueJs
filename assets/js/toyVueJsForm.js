@@ -1,5 +1,9 @@
 /*jshint esversion: 9 */
-import { normalizeToyImageUrl } from '/assets/js/config.js';
+import {
+  normalizeToyImageUrl,
+  TOY_FORM_FIELD_NAMES,
+  TOY_PREVIEW_STATUS,
+} from '/assets/js/config.js';
 import {
   CHECKING_PREVIEW_MESSAGE,
   CHECKING_PREVIEW_PLACEHOLDER,
@@ -29,7 +33,7 @@ export function getToyImageError(vm, value) {
 
 export function startToyImagePreviewCheck(vm, source, token) {
   vm.setPreviewState({
-    status: 'pending',
+    status: TOY_PREVIEW_STATUS.PENDING,
     src: '',
     source,
     token,
@@ -44,13 +48,13 @@ export function startToyImagePreviewCheck(vm, source, token) {
       }
 
       vm.setPreviewState({
-        status: 'ready',
+        status: TOY_PREVIEW_STATUS.READY,
         src: source,
         source,
         message: READY_PREVIEW_MESSAGE,
         placeholderMessage: vm.defaultPreviewPlaceholder,
       });
-      vm.setFieldError('image', '');
+      vm.setFieldError(TOY_FORM_FIELD_NAMES.IMAGE, '');
     })
     .catch(() => {
       if (vm.preview.token !== token || vm.normalizedImageUrl !== source) {
@@ -58,13 +62,13 @@ export function startToyImagePreviewCheck(vm, source, token) {
       }
 
       vm.setPreviewState({
-        status: 'error',
+        status: TOY_PREVIEW_STATUS.ERROR,
         src: '',
         source,
         message: LOCKED_PREVIEW_MESSAGE,
         placeholderMessage: vm.errorPreviewPlaceholder,
       });
-      vm.setFieldError('image', TOY_IMAGE_VALIDATION_MESSAGES.previewLoadError);
+      vm.setFieldError(TOY_FORM_FIELD_NAMES.IMAGE, TOY_IMAGE_VALIDATION_MESSAGES.previewLoadError);
     });
 }
 
@@ -74,7 +78,7 @@ export function queueToyImagePreview(vm, immediate = false) {
   if (imageError && imageError !== TOY_IMAGE_VALIDATION_MESSAGES.previewLoadError) {
     vm.clearPreviewTimer();
     vm.setPreviewState({
-      status: 'idle',
+      status: TOY_PREVIEW_STATUS.IDLE,
       src: '',
       source: '',
       message: 'Enter a valid image URL or local toy image path to unlock submit.',
@@ -90,7 +94,10 @@ export function queueToyImagePreview(vm, immediate = false) {
     return;
   }
 
-  if (vm.preview.source === vm.normalizedImageUrl && (vm.preview.status === 'pending' || vm.preview.status === 'ready')) {
+  if (
+    vm.preview.source === vm.normalizedImageUrl &&
+    (vm.preview.status === TOY_PREVIEW_STATUS.PENDING || vm.preview.status === TOY_PREVIEW_STATUS.READY)
+  ) {
     return;
   }
 
@@ -104,7 +111,7 @@ export function queueToyImagePreview(vm, immediate = false) {
   }
 
   vm.setPreviewState({
-    status: 'pending',
+    status: TOY_PREVIEW_STATUS.PENDING,
     src: '',
     source: vm.normalizedImageUrl,
     token,

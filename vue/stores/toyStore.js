@@ -1,5 +1,10 @@
 /*jshint esversion: 9 */
-import { toApiImageUrl } from '../../assets/js/config/config.js';
+import {
+  toApiImageUrl,
+  TOY_TOAST_SETTINGS,
+  TOY_TOAST_VARIANTS,
+  TOY_UI_DELAYS,
+} from '../../assets/js/config.js';
 import {
   addToastState,
   createHighlightedToyState,
@@ -168,7 +173,7 @@ const actions = {
     highlightTimer = setTimeout(() => {
       commit('SET_HIGHLIGHTED_TOY', createHighlightedToyState());
       highlightTimer = null;
-    }, 700);
+    }, TOY_UI_DELAYS.HIGHLIGHT_RESET_MS);
   },
   addToast(context, payload) {
     const { commit } = context;
@@ -213,8 +218,8 @@ const actions = {
       dispatch('addToast', {
         title: 'Unable to load toys',
         message: getToastMessage(err, 'The collection could not be loaded from the API.'),
-        variant: 'danger',
-        delay: 5000,
+        variant: TOY_TOAST_VARIANTS.DANGER,
+        delay: TOY_TOAST_SETTINGS.DEFAULT_DELAY_MS,
       });
       return false;
     }
@@ -256,7 +261,7 @@ const actions = {
       dispatch('addToast', {
         title: 'Toy created',
         message: `${result.name} is now on the shelf.`,
-        variant: 'success',
+        variant: TOY_TOAST_VARIANTS.SUCCESS,
       });
       return result;
     } catch (err) {
@@ -266,8 +271,8 @@ const actions = {
       dispatch('addToast', {
         title: 'Create failed',
         message: getToastMessage(err, 'The toy could not be created.'),
-        variant: 'danger',
-        delay: 3600,
+        variant: TOY_TOAST_VARIANTS.DANGER,
+        delay: TOY_TOAST_SETTINGS.ERROR_DELAY_MS,
       });
       return { error: err.message };
     }
@@ -285,8 +290,8 @@ const actions = {
       dispatch('addToast', {
         title: 'Update failed',
         message: 'The selected toy could not be found.',
-        variant: 'danger',
-        delay: 3600,
+        variant: TOY_TOAST_VARIANTS.DANGER,
+        delay: TOY_TOAST_SETTINGS.ERROR_DELAY_MS,
       });
       return { error: 'Toy not found.' };
     }
@@ -310,7 +315,7 @@ const actions = {
       dispatch('addToast', {
         title: 'Toy updated',
         message: `${result.name} was saved successfully.`,
-        variant: 'primary',
+        variant: TOY_TOAST_VARIANTS.PRIMARY,
       });
 
       return result;
@@ -321,8 +326,8 @@ const actions = {
       dispatch('addToast', {
         title: 'Update failed',
         message: getToastMessage(err, 'The toy could not be updated.'),
-        variant: 'danger',
-        delay: 3600,
+        variant: TOY_TOAST_VARIANTS.DANGER,
+        delay: TOY_TOAST_SETTINGS.ERROR_DELAY_MS,
       });
       return { error: err.message };
     }
@@ -352,7 +357,7 @@ const actions = {
       dispatch('addToast', {
         title: 'Toy deleted',
         message: `${toy && toy.name ? toy.name : 'The toy'} was removed from the shelf.`,
-        variant: 'warning',
+        variant: TOY_TOAST_VARIANTS.WARNING,
       });
     } catch (err) {
       console.error('Error delete toy', err);
@@ -361,8 +366,8 @@ const actions = {
       dispatch('addToast', {
         title: 'Delete failed',
         message: getToastMessage(err, 'The toy could not be deleted.'),
-        variant: 'danger',
-        delay: 3600,
+        variant: TOY_TOAST_VARIANTS.DANGER,
+        delay: TOY_TOAST_SETTINGS.ERROR_DELAY_MS,
       });
     }
   },
@@ -383,8 +388,8 @@ const actions = {
       dispatch('addToast', {
         title: 'Likes updated',
         message: `${result.name} now has ${result.likes} likes.`,
-        variant: 'success',
-        delay: 5000,
+        variant: TOY_TOAST_VARIANTS.SUCCESS,
+        delay: TOY_TOAST_SETTINGS.DEFAULT_DELAY_MS,
       });
       return result;
     } catch (err) {
@@ -392,8 +397,8 @@ const actions = {
       dispatch('addToast', {
         title: 'Like failed',
         message: getToastMessage(err, 'The like count could not be updated.'),
-        variant: 'danger',
-        delay: 5000,
+        variant: TOY_TOAST_VARIANTS.DANGER,
+        delay: TOY_TOAST_SETTINGS.DEFAULT_DELAY_MS,
       });
       return { error: err.message };
     } finally {
