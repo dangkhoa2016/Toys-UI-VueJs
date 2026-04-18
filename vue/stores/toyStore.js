@@ -33,6 +33,7 @@ import {
 const state = createToyStoreState();
 
 const mutations = {
+  // UI / filters
   SET_CREATE_TOY_MODAL_OPEN(state, payload) {
     state.createToyModalOpen = payload;
   },
@@ -48,14 +49,8 @@ const mutations = {
   SET_HIGHLIGHTED_TOY(state, payload) {
     setHighlightedToyState(state, payload);
   },
-  ADD_TOAST(state, payload) {
-    addToastState(state, payload);
-  },
-  REMOVE_TOAST(state, payload) {
-    removeToastState(state, payload);
-  },
 
-
+  // List
   SET_LOAD_TOYS_ERROR(state, payload) {
     state.loadToysError = (payload && payload.message) ? payload.message : payload;
   },
@@ -72,39 +67,52 @@ const mutations = {
     state.totalToys = payload;
   },
 
-
-  SET_CREATE_TOY_RESULT(state, payload) {
-    state.createToyResult = payload;
+  // Create
+  SET_IS_CREATING_TOY(state, payload) {
+    state.isCreatingToy = payload;
   },
   SET_CREATE_TOY_ERROR(state, payload) {
     state.createToyError = payload && payload.error ? payload.error : payload;
   },
-  SET_IS_CREATING_TOY(state, payload) {
-    state.isCreatingToy = payload;
+  SET_CREATE_TOY_RESULT(state, payload) {
+    state.createToyResult = payload;
   },
-  SET_UPDATE_TOY_RESULT(state, payload) {
-    state.updateToyResult = payload;
+  PREPEND_TOY(state, payload) {
+    prependToyState(state, payload);
+  },
+
+  // Update
+  SET_UPDATING_TOY_ID(state, payload) {
+    state.updatingToyId = payload;
   },
   SET_UPDATE_TOY_ERROR(state, payload) {
     state.updateToyError = payload && payload.error ? payload.error : payload;
   },
-  SET_UPDATING_TOY_ID(state, payload) {
-    state.updatingToyId = payload;
+  SET_UPDATE_TOY_RESULT(state, payload) {
+    state.updateToyResult = payload;
+  },
+  UPSERT_TOY(state, payload) {
+    updateToyState(state, payload);
   },
 
-
+  // Delete
   SET_CONFIRM_DELETE_TOY_ID(state, payload) {
     state.confirmDeleteToyId = payload;
-  },
-  SET_DELETE_TOY_ERROR(state, payload) {
-    state.deleteToyError = payload && payload.error ? payload.error : payload;
   },
   SET_IS_DELETING_TOY(state, payload) {
     state.isDeletingToy = payload;
   },
+  SET_DELETE_TOY_ERROR(state, payload) {
+    state.deleteToyError = payload && payload.error ? payload.error : payload;
+  },
   SET_DELETE_TOY_RESULT(state, payload) {
     state.deleteToyResult = payload;
   },
+  REMOVE_DELETE_TARGET_TOY(state) {
+    removeToyState(state);
+  },
+
+  // Like
   SET_LIKING_TOY_ID(state, payload) {
     state.likingToyId = payload;
   },
@@ -116,17 +124,13 @@ const mutations = {
   REMOVE_LIKING_TOY_ID(state, payload) {
     state.likingToyIds = state.likingToyIds.filter((id) => id !== payload);
   },
-  REMOVE_DELETE_TARGET_TOY(state) {
-    removeToyState(state);
+
+  // Toast
+  ADD_TOAST(state, payload) {
+    addToastState(state, payload);
   },
-
-  PREPEND_TOY(state, payload) {
-    prependToyState(state, payload);
-  },
-
-
-  UPSERT_TOY(state, payload) {
-    updateToyState(state, payload);
+  REMOVE_TOAST(state, payload) {
+    removeToastState(state, payload);
   },
 };
 
