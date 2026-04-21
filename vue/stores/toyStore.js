@@ -205,8 +205,13 @@ const actions = {
 
       if (result.length === 0) {
         commit('SET_IS_AUTO_SEEDING', true);
-        await seedDemoToys(endpoint);
-        result = await fetchToys(endpoint);
+        const seededToys = [];
+        await seedDemoToys(endpoint, (toy) => {
+          seededToys.push(toy);
+          commit('PREPEND_TOY', toy);
+          commit('SET_CREATE_TOY_RESULT', toy);
+        });
+        result = seededToys;
         commit('SET_IS_AUTO_SEEDING', false);
       }
 

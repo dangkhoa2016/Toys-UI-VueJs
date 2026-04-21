@@ -108,7 +108,7 @@ export async function fetchToys(endpoint = TOY_API_URL) {
   return Array.isArray(toys) ? toys.map(normalizeToy) : [];
 }
 
-export async function seedDemoToys(endpoint = TOY_API_URL) {
+export async function seedDemoToys(endpoint = TOY_API_URL, onEach = null) {
   const demoData = await requestJson(DEMO_DATA_PATH);
   const toys = Array.isArray(demoData?.toys) ? demoData.toys.map(normalizeToy) : [];
 
@@ -121,7 +121,9 @@ export async function seedDemoToys(endpoint = TOY_API_URL) {
           image: toApiImageUrl(toy.image),
           likes: toy.likes,
         })
-      )
+      ).then((result) => {
+        if (onEach) onEach(normalizeToy(result));
+      })
     )
   );
 
@@ -135,8 +137,13 @@ export async function fetchOrSeedToys(endpoint = TOY_API_URL) {
     return toys;
   }
 
-  await seedDemoToys(endpoint);
-  return fetchToys(endpoint);
+  const seededToys = [];
+
+  await seedDemoToys(endpoint, (toy) => {
+    seededToys.push(toy);
+  });
+
+  return seededToys;
 }
 
 export async function createToy(payload, endpoint = TOY_API_URL) {
